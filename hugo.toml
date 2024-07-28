@@ -1,0 +1,170 @@
+baseURL = "http://fireflyyh.top/"
+title = "Jagger's Blog"
+paginate = 10
+theme = "PaperMod"
+enableRobotsTXT = true
+buildDrafts = false
+buildFuture = false
+buildExpired = false
+googleAnalytics = "UA-123-45"
+pygmentsUseClasses = true
+
+[minify]
+disableXML = true
+minifyOutput = true
+
+[params]
+env = "production"
+title = "Jagger's Blog"
+description = "Welcome to Jagger's blog!"
+keywords = [ "Blog", "Portfolio", "PaperMod" ]
+author = "Jagger"
+images = [ "<link or path of image for opengraph, twitter-cards>" ]
+DateFormat = "January 2, 2006"
+defaultTheme = "auto"
+disableThemeToggle = false
+ShowReadingTime = true
+ShowShareButtons = true
+ShowPostNavLinks = true
+ShowBreadCrumbs = true
+ShowCodeCopyButtons = true
+ShowWordCount = true
+ShowRssButtonInSectionTermList = true
+# UseHugoToc = true
+disableSpecial1stPost = false
+disableScrollToTop = false
+comments = false
+hidemeta = false
+hideSummary = false
+showtoc = true
+tocopen = true
+
+  [params.assets]
+  favicon = "<link / abs url>"
+  favicon16x16 = "<link / abs url>"
+  favicon32x32 = "<link / abs url>"
+  apple_touch_icon = "<link / abs url>"
+  safari_pinned_tab = "<link / abs url>"
+
+  [params.label]
+  text = "Jagger's Blog"
+  # icon = "https://picgo-myblog.oss-cn-beijing.aliyuncs.com/Images/yuan.jpg"
+  icon = "https://picgo-01.oss-cn-shanghai.aliyuncs.com/Images/laugh.jpg"
+  iconHeight = 35
+
+  [params.profileMode]
+  enabled = true
+  title = "Jagger"
+  subtitle = "欢迎来到我的个人博客！"
+  imageUrl = "https://picgo-myblog.oss-cn-beijing.aliyuncs.com/Images/yuan.jpg"
+  imageWidth = 120
+  imageHeight = 120
+  imageTitle = "my image"
+
+    [[params.profileMode.buttons]]
+    name = "Posts"
+    url = "posts"
+
+    [[params.profileMode.buttons]]
+    name = "Tags"
+    url = "tags"
+
+  [params.homeInfoParams]
+  Title = "Hi there 👋"
+  Content = "Welcome to my blog"
+
+  [[params.socialIcons]]
+  name = "github"
+  url = "https://github.com/starsYHyh"
+
+  [[params.socialIcons]]
+  name = "email"
+  url = "mailto:FireflyYH@outlook.com"
+
+  [[params.socialIcons]]
+  name = "bilibili"
+  url = "https://space.bilibili.com/473874141"
+
+[params.analytics.google]
+SiteVerificationTag = "XYZabc"
+
+[params.analytics.bing]
+SiteVerificationTag = "XYZabc"
+
+[params.analytics.yandex]
+SiteVerificationTag = "XYZabc"
+
+  [params.cover]
+  hidden = true
+  hiddenInList = true
+  hiddenInSingle = true
+
+  [params.editPost]
+  URL = "https://github.com/<path_to_repo>/content"
+  Text = "Suggest Changes"
+  appendFilePath = true
+
+  [params.fuseOpts]
+  isCaseSensitive = false
+  shouldSort = true
+  location = 0
+  distance = 1_000
+  threshold = 0.4
+  minMatchCharLength = 0
+  limit = 10
+  keys = [ "title", "permalink", "summary", "content" ]
+
+[[menu.main]]
+identifier = "Archive"
+name = "Archives"
+url = "/archives/"
+weight = 10
+
+[[menu.main]]
+identifier = "categories"
+name = "Categories"
+url = "/categories/"
+weight = 20
+
+[[menu.main]]
+identifier = "tags"
+name = "Tags"
+url = "/tags/"
+weight = 30
+
+[[menu.main]]
+identifier = "search"
+name = "Search"
+url = "/search/"
+weight = 40
+
+[[menu.main]]
+identifier = "about"
+name = "About"
+url = "/about/"
+weight = 50
+
+# [[menu.main]]
+# identifier = "example"
+# name = "example.org"
+# url = "https://example.org"
+# weight = 30
+
+
+[markup]
+  [markup.highlight]
+    noClasses = true
+    anchorLineNos = false
+    codeFences = true
+    guessSyntax = true
+    hl_Lines = ""
+    lineAnchors = ""
+    lineNoStart =1
+    lineNos = true
+    lineNumbersInTable = true
+    style = "monokai"
+    tabWidth = 4
+
+[outputs]
+  home = [ "HTML", "RSS", "JSON" ]
+
