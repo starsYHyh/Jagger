@@ -1,4 +1,4 @@
-baseURL = "/"
+baseURL = "staryh.top"
 title = "Jagger's Blog"
 paginate = 10
 theme = "PaperMod"
@@ -40,7 +40,7 @@ showtoc = true
 tocopen = true
 
   [params.assets]
-  favicon = "<link / abs url>"
+  favicon = "img/yuan.jpg"
   favicon16x16 = "<link / abs url>"
   favicon32x32 = "<link / abs url>"
   apple_touch_icon = "<link / abs url>"
@@ -49,14 +49,14 @@ tocopen = true
   [params.label]
   text = "Jagger's Blog"
   # icon = "https://picgo-myblog.oss-cn-beijing.aliyuncs.com/Images/yuan.jpg"
-  icon = "https://picgo-01.oss-cn-shanghai.aliyuncs.com/Images/laugh.jpg"
+  icon = "img/laugh.jpg"
   iconHeight = 35
 
   [params.profileMode]
   enabled = true
   title = "Jagger"
   subtitle = "欢迎来到我的个人博客！"
-  imageUrl = "https://picgo-myblog.oss-cn-beijing.aliyuncs.com/Images/yuan.jpg"
+  imageUrl = "img/yuan.jpg"
   imageWidth = 120
   imageHeight = 120
   imageTitle = "my image"
@@ -100,7 +100,7 @@ SiteVerificationTag = "XYZabc"
   hiddenInSingle = true
 
   [params.editPost]
-  URL = "https://github.com/<path_to_repo>/content"
+  URL = "https://github.com/starsYHyh/Jagger/content"
   Text = "Suggest Changes"
   appendFilePath = true
 
