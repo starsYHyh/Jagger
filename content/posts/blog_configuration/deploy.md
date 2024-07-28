@@ -119,7 +119,7 @@ server {
 
 
         error_page 404 /404.html;
-        location = /40x.html {
+        location = /404.html {
                 root /home/firefly/Codes/blog/public;
         }
 }
@@ -162,3 +162,40 @@ git config core.sparseCheckout true
 git remote add origin git@gitee.com:yourname/yourrepo.git 
 ```
 
+## 5. SSL证书
+### 5.1 获得SSL证书
+由于[阿里云策略](https://help.aliyun.com/zh/ssl-certificate/product-overview/notice-on-adjustment-of-service-policies-for-free-certificates?spm=0.2020520163.0.0.eb3b3711whjNcb)改变，目前免费的只有个人测试证书（原免费证书）。
+
+根据[Nginx或Tengine服务器配置SSL证书](https://help.aliyun.com/zh/ssl-certificate/user-guide/install-ssl-certificates-on-nginx-servers-or-tengine-servers?spm=a2c4g.11186623.0.0.4c5845b7mFWgir#concept-n45-21x-yfb)来进行配置。
+其中，将下载的证书相关文件解压缩到`/etc/nginx/`中，
+
+### 5.3 修改nginx配置
+同样地，在default文件中，结合了本文提到的两个博客，增加以下内容：
+```text
+server {
+        listen 443 ssl;
+
+        server_name www.fireflyyh.top;
+        root /home/firefly/Codes/blog/public;
+
+        ssl_certificate /etc/nginx/fireflyyh.top.pem;
+        ssl_certificate_key /etc/nginx/fireflyyh.top.key;
+
+        ssl_session_cache shared:SSL:1m;
+        ssl_session_timeout 5m;
+
+        #自定义设置使用的TLS协议的类型以及加密套件（以下为配置示例，请您自行评估是否需要配置）
+        #TLS协议版本越高，HTTPS通信的安全性越高，但是相较于低版本TLS协议，高版本TLS协议对浏览器的兼容性较差。
+        ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE:ECDH:AES:HIGH:!NULL:!aNULL:!MD5:!ADH:!RC4;
+        ssl_protocols TLSv1.1 TLSv1.2 TLSv1.3;
+
+        #表示优先使用服务端加密套件。默认开启
+        ssl_prefer_server_ciphers on;
+
+        error_page 404 /404.html;
+
+        location = /404.html {
+             root /home/firefly/Codes/blog/public;
+        }
+}
+```
