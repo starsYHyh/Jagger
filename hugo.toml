@@ -1,4 +1,4 @@
-baseURL = "staryh.top"
+baseURL = "http://47.120.24.183/"
 title = "Jagger's Blog"
 paginate = 10
 theme = "PaperMod"
@@ -117,31 +117,31 @@ SiteVerificationTag = "XYZabc"
 [[menu.main]]
 identifier = "Archive"
 name = "Archives"
-url = "/archives/"
+url = "archives/"
 weight = 10
 
 [[menu.main]]
 identifier = "categories"
 name = "Categories"
-url = "/categories/"
+url = "categories/"
 weight = 20
 
 [[menu.main]]
 identifier = "tags"
 name = "Tags"
-url = "/tags/"
+url = "tags/"
 weight = 30
 
 [[menu.main]]
 identifier = "search"
 name = "Search"
-url = "/search/"
+url = "search/"
 weight = 40
 
 [[menu.main]]
 identifier = "about"
 name = "About"
-url = "/about/"
+url = "about/"
 weight = 50
 
 # [[menu.main]]

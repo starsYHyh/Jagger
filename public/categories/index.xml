@@ -2,29 +2,29 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>Categories on Jagger&#39;s Blog</title>
-    <link>//localhost:1313/categories/</link>
+    <link>http://47.120.24.183/categories/</link>
     <description>Recent content in Categories on Jagger&#39;s Blog</description>
     <image>
       <title>Jagger&#39;s Blog</title>
-      <url>//localhost:1313/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</url>
-      <link>//localhost:1313/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</link>
+      <url>http://47.120.24.183/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</url>
+      <link>http://47.120.24.183/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</link>
     </image>
     <generator>Hugo -- 0.129.0</generator>
     <language>en</language>
     <lastBuildDate>Sun, 28 Jul 2024 00:00:00 +0000</lastBuildDate>
-    <atom:link href="//localhost:1313/categories/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://47.120.24.183/categories/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Learning</title>
-      <link>//localhost:1313/categories/learning/</link>
+      <link>http://47.120.24.183/categories/learning/</link>
       <pubDate>Sun, 28 Jul 2024 00:00:00 +0000</pubDate>
-      <guid>//localhost:1313/categories/learning/</guid>
+      <guid>http://47.120.24.183/categories/learning/</guid>
       <description></description>
     </item>
     <item>
       <title>Daily</title>
-      <link>//localhost:1313/categories/daily/</link>
+      <link>http://47.120.24.183/categories/daily/</link>
       <pubDate>Mon, 09 Sep 2002 07:00:34 +0800</pubDate>
-      <guid>//localhost:1313/categories/daily/</guid>
+      <guid>http://47.120.24.183/categories/daily/</guid>
       <description></description>
     </item>
   </channel>
