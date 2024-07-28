@@ -1,4 +1,4 @@
-baseURL = "http://fireflyyh.top/"
+baseURL = "/"
 title = "Jagger's Blog"
 paginate = 10
 theme = "PaperMod"

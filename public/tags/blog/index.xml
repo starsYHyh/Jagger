@@ -2,22 +2,22 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>BLOG on Jagger&#39;s Blog</title>
-    <link>http://localhost:1313/tags/blog/</link>
+    <link>//localhost:1313/tags/blog/</link>
     <description>Recent content in BLOG on Jagger&#39;s Blog</description>
     <image>
       <title>Jagger&#39;s Blog</title>
-      <url>http://localhost:1313/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</url>
-      <link>http://localhost:1313/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</link>
+      <url>//localhost:1313/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</url>
+      <link>//localhost:1313/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</link>
     </image>
     <generator>Hugo -- 0.129.0</generator>
     <language>en</language>
     <lastBuildDate>Sun, 28 Jul 2024 00:00:00 +0000</lastBuildDate>
-    <atom:link href="http://localhost:1313/tags/blog/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="//localhost:1313/tags/blog/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>将博客部署到阿里云服务器</title>
-      <link>http://localhost:1313/posts/blog_configuration/deploy/</link>
+      <link>//localhost:1313/posts/blog_configuration/deploy/</link>
       <pubDate>Sun, 28 Jul 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/blog_configuration/deploy/</guid>
+      <guid>//localhost:1313/posts/blog_configuration/deploy/</guid>
       <description>之前搭建hexo博客，是将其部署到github中，通过github.io来访问，但是速度感人，所以本次尝试将hugo博客部署到阿里云服务器，通过域名进行访问，本文参考了hugo博客部署到腾讯云轻量级服务器。 由于是我第一次使用nginx，所以如果遇到什么问题，请多海涵并且可以参考其他博客或网络资料。
 在部署之前，我已经购买了阿里云服务器（配置为2核2GB）、域名（fireflyyh.top）。
 1. 服务器端下载并安装nginx 1.1 安装nginx 在ubuntu环境下： 安装nginx

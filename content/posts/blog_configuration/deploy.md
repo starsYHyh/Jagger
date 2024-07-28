@@ -92,3 +92,54 @@ Jul 26 21:46:50 Firefly-Aliyun systemd[1]: Started A high performance web server
 └── win-utf
 ```
 根据参考博客，要在`nginx.conf`文件中编辑`Server`字段，但是在我的这个文件中，并没有出现该字段。经过查阅资料，可以在`./sites-available/default`当中编辑。
+
+当没有SSL证书时：
+```bash
+server {
+        listen 80 default_server;
+        listen [::]:80 default_server;
+
+        # 修改页面所在目录
+        root /home/firefly/Codes/blog/public;
+
+        # Add index.php to the list if you are using PHP
+        index index.html index.htm index.nginx-debian.html;
+
+        # 修改域名
+        server_name www.staryh.top;
+
+        # 修改
+        location / {
+                # First attempt to serve request as file, then
+                # as directory, then fall back to displaying a 404.
+                root /home/firefly/Codes/blog/public;
+                index index.html index.htm;
+                # try_files $uri $uri/ =404;
+        }
+
+
+        error_page 404 /404.html;
+        location = /40x.html {
+                root /home/firefly/Codes/blog/public;
+        }
+
+}
+```
+经过上述修改之后，输入服务器IP地址，就可以访问了
+
+## 3. 实现本机和服务器的public文件夹同步
+在这一部分，我的想法比较复杂。
+1. 将本地的博客文件夹放到github中，方便更多人能够访问我的博客所有的文件。
+2. 考虑到github的访问速度，打算在gitee中建立一个镜像的仓库，以实现github和gitee的博客文件夹的同步。
+3. 这样服务器只需要pull gitee 仓库中的public子文件夹，便可以得到本地主机push到github仓库中的public文件夹。
+
+### 3.1 本地->github
+将本地博客文件夹push到[github仓库](https://github.com/starsYHyh/Jagger)中
+
+### 3.2 github->gitee
+参考了[一篇教你代码同步 Github 和 Gitee](https://github.com/mqyqingfeng/Blog/issues/236)，
+
+1. 在gitee上绑定github账号；
+2. 在gitee中创建[同名仓库](https://gitee.com/starsyhyh/Jagger)，在仓库的`管理`标签页，选择`仓库镜像管理`，添加镜像，选择镜像方向为`pull gitee <- github`，选择正确的镜像仓库，并添加私人令牌，私人令牌在`github界面->用户头像->settings->developer settings->personal access tokens`中获取，勾选自动同步
+
+### 3.3 gitee->服务器
