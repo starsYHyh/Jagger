@@ -100,7 +100,7 @@ SiteVerificationTag = "XYZabc"
   hiddenInSingle = true
 
   [params.editPost]
-  URL = "https://github.com/starsYHyh/Jagger/content"
+  URL = "https://github.com/starsYHyh/Jagger/tree/main/content"
   Text = "Suggest Changes"
   appendFilePath = true
 
@@ -144,11 +144,11 @@ name = "About"
 url = "about/"
 weight = 50
 
-# [[menu.main]]
-# identifier = "example"
-# name = "example.org"
-# url = "https://example.org"
-# weight = 30
+[[menu.main]]
+identifier = "github"
+name = "Github"
+url = "https://github.com/starsYHyh/Jagger/"
+weight = 60
 
 
 [markup]
