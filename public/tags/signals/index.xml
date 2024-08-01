@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
-    <title>TLPI on Jagger&#39;s Blog</title>
-    <link>http://47.120.24.183/tags/tlpi/</link>
-    <description>Recent content in TLPI on Jagger&#39;s Blog</description>
+    <title>Signals on Jagger&#39;s Blog</title>
+    <link>http://47.120.24.183/tags/signals/</link>
+    <description>Recent content in Signals on Jagger&#39;s Blog</description>
     <image>
       <title>Jagger&#39;s Blog</title>
       <url>http://47.120.24.183/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</url>
@@ -12,7 +12,7 @@
     <generator>Hugo -- 0.129.0</generator>
     <language>en</language>
     <lastBuildDate>Thu, 01 Aug 2024 00:00:00 +0000</lastBuildDate>
-    <atom:link href="http://47.120.24.183/tags/tlpi/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://47.120.24.183/tags/signals/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>信号处理函数中调用不可重入的函数</title>
       <link>http://47.120.24.183/posts/tlpi/nonreentrant/</link>

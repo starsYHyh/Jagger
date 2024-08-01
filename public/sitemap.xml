@@ -3,22 +3,28 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>http://47.120.24.183/categories/</loc>
-    <lastmod>2024-07-31T00:00:00+00:00</lastmod>
+    <lastmod>2024-08-01T00:00:00+00:00</lastmod>
   </url><url>
     <loc>http://47.120.24.183/</loc>
-    <lastmod>2024-07-31T00:00:00+00:00</lastmod>
+    <lastmod>2024-08-01T00:00:00+00:00</lastmod>
   </url><url>
     <loc>http://47.120.24.183/categories/learning/</loc>
-    <lastmod>2024-07-31T00:00:00+00:00</lastmod>
+    <lastmod>2024-08-01T00:00:00+00:00</lastmod>
   </url><url>
     <loc>http://47.120.24.183/posts/</loc>
-    <lastmod>2024-07-31T00:00:00+00:00</lastmod>
+    <lastmod>2024-08-01T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://47.120.24.183/tags/signals/</loc>
+    <lastmod>2024-08-01T00:00:00+00:00</lastmod>
   </url><url>
     <loc>http://47.120.24.183/tags/</loc>
-    <lastmod>2024-07-31T00:00:00+00:00</lastmod>
+    <lastmod>2024-08-01T00:00:00+00:00</lastmod>
   </url><url>
     <loc>http://47.120.24.183/tags/tlpi/</loc>
-    <lastmod>2024-07-31T00:00:00+00:00</lastmod>
+    <lastmod>2024-08-01T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://47.120.24.183/posts/tlpi/nonreentrant/</loc>
+    <lastmod>2024-08-01T00:00:00+00:00</lastmod>
   </url><url>
     <loc>http://47.120.24.183/posts/tlpi/t_sigaltstack/</loc>
     <lastmod>2024-07-31T00:00:00+00:00</lastmod>

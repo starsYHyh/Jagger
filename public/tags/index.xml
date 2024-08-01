@@ -11,12 +11,19 @@
     </image>
     <generator>Hugo -- 0.129.0</generator>
     <language>en</language>
-    <lastBuildDate>Wed, 31 Jul 2024 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 01 Aug 2024 00:00:00 +0000</lastBuildDate>
     <atom:link href="http://47.120.24.183/tags/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Signals</title>
+      <link>http://47.120.24.183/tags/signals/</link>
+      <pubDate>Thu, 01 Aug 2024 00:00:00 +0000</pubDate>
+      <guid>http://47.120.24.183/tags/signals/</guid>
+      <description></description>
+    </item>
     <item>
       <title>TLPI</title>
       <link>http://47.120.24.183/tags/tlpi/</link>
-      <pubDate>Wed, 31 Jul 2024 00:00:00 +0000</pubDate>
+      <pubDate>Thu, 01 Aug 2024 00:00:00 +0000</pubDate>
       <guid>http://47.120.24.183/tags/tlpi/</guid>
       <description></description>
     </item>

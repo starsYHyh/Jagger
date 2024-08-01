@@ -2,12 +2,14 @@
 title: "在备选栈中处理信号"
 date: 2024-07-31
 draft: false
-tags: ["TLPI"]
+tags: ["TLPI", "signals"]
 categories: ["Learning"]
 ---
-# 本篇代码对应着TLPI 21.3：在备选栈中处理信号：sigaltstack()
+
+## TLPI 21.3：在备选栈中处理信号：sigaltstack()
 
 ## 代码
+
 ```c
 static void sigsegvHandler(int sig) {
     int x;
@@ -57,10 +59,13 @@ int main(int argc, char *argv[]) {
 ```
 
 ## 解释
+
 ### ulimit
-使用`ulimit -s unlimited`会负责移除当前shell会话时设置的任何 RLIMIT_STACK 资源限，对其他shell会话无影响。但是在使用了这句话之后调用程序，系统会一直打印信息至`Call 78522 - top of stack near 0x7ffa472aac80`，即递归调用了78522次，然后`[1]    16044 killed     ./T_SIGALTSTACK`直接将进程杀死。并没有出现预期的`Caught signal 11 (Segmentation fault)`。
+
+使用`ulimit -s unlimited`会负责移除当前 shell 会话时设置的任何 RLIMIT_STACK 资源限制，对其他 shell 会话无影响。但是在使用了这句话之后调用程序，系统会一直打印信息至`Call 78522 - top of stack near 0x7ffa472aac80`，即递归调用了78522次，然后`[1]    16044 killed     ./T_SIGALTSTACK`直接将进程杀死。并没有出现预期的`Caught signal 11 (Segmentation fault)`。
 
 于是我将限制资源回复成了默认大小，再进行调用，出现了预期的结果：
+
 ```bash
 Top of standard stack is near 0x7ffd97398ebc
 Alternate stack is at 0x55fb092fd6b0-0x55fb0931dfff
@@ -72,10 +77,11 @@ Caught signal 11 (Segmentation fault)
 Top of handler stack near 0x55fb092ff164
 ```
 
-经过查阅资料，当使用`ulimit -s unlimited`来移除栈大小限制时，程序可以无限制地使用栈空间。在你提供的代码中，`overflowStack()`函数通过递归调用，不断分配大量内存（每次调用分配100000字节），很快会耗尽系统的可用内存。
-当系统检测到内存耗尽时，会启动OOM Killer来终止占用大量内存的进程。在你的例子中，程序在递归调用了78522次后，占用了大量内存，触发了OOM Killer，直接将进程终止，这就是为什么进程被直接杀死而不是触发SIGSEGV信号处理程序。
+经过查阅资料，当使用`ulimit -s unlimited`来移除栈大小限制时，程序可以无限制地使用栈空间。在本代码中，`overflowStack()`函数通过递归调用，不断分配大量内存（每次调用分配100000字节），很快会耗尽系统的可用内存。
+当系统检测到内存耗尽时，会启动 **OOM Killer** 来终止占用大量内存的进程。当程序在递归调用了78522次后，占用了大量内存，触发了 OOM Killer，直接将进程终止，所以进程被直接杀死而不是触发 SIGSEGV 信号处理程序。
 
 ### fflush(NULL)
-关于`fflush(NULL)`，是为了在程序异常终止前确保所有标准输出缓冲区的数据都被写入到相应的输出设备。尽管程序有固定的执行顺序，但标准输出（stdout）通常是缓冲的。**这意味着输出的数据并不会立即被写入到屏幕或文件，而是先存储在缓冲区中**，直到缓冲区满或者遇到刷新操作（如换行、fflush调用等）才会被真正写出。
+
+关于`fflush(NULL)`，是为了在程序异常终止前确保所有标准输出缓冲区的数据都被写入到相应的输出设备。尽管程序有固定的执行顺序，但标准输出（stdout）通常是缓冲的。**这意味着输出的数据并不会立即被写入到屏幕或文件，而是先存储在缓冲区中**，直到缓冲区满或者遇到刷新操作（如换行、fflush 调用等）才会被真正写出。
 
 在正常情况下，`printf`输出的数据会在适当的时机刷新到屏幕上。但是，如果程序异常终止，缓冲区中的数据可能没有机会被刷新，从而导致部分或全部输出丢失。`exit` 函数会执行标准库的清理操作，包括刷新缓冲区。但 `_exit` 函数是直接退出，不进行任何清理操作，包括缓冲区的刷新。这也就是为什么示例程序在`_exit()` 之前要进行`fflush()` 操作。
