@@ -2,36 +2,36 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>Posts on Jagger&#39;s Blog</title>
-    <link>http://47.120.24.183/posts/</link>
+    <link>https://fireflyyh.top/posts/</link>
     <description>Recent content in Posts on Jagger&#39;s Blog</description>
     <image>
       <title>Jagger&#39;s Blog</title>
-      <url>http://47.120.24.183/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</url>
-      <link>http://47.120.24.183/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</link>
+      <url>https://fireflyyh.top/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</url>
+      <link>https://fireflyyh.top/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</link>
     </image>
     <generator>Hugo -- 0.129.0</generator>
     <language>en</language>
     <lastBuildDate>Thu, 01 Aug 2024 00:00:00 +0000</lastBuildDate>
-    <atom:link href="http://47.120.24.183/posts/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://fireflyyh.top/posts/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>信号处理函数中调用不可重入的函数</title>
-      <link>http://47.120.24.183/posts/tlpi/nonreentrant/</link>
+      <link>https://fireflyyh.top/posts/tlpi/nonreentrant/</link>
       <pubDate>Thu, 01 Aug 2024 00:00:00 +0000</pubDate>
-      <guid>http://47.120.24.183/posts/tlpi/nonreentrant/</guid>
+      <guid>https://fireflyyh.top/posts/tlpi/nonreentrant/</guid>
       <description>TLPI 21.1.2: 可重入函数和异步信号安全函数 代码 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 #define _XOPEN_SOURCE 600 #include &amp;lt;unistd.h&amp;gt; #include &amp;lt;signal.h&amp;gt; #include &amp;lt;string.h&amp;gt; #include &amp;lt;crypt.h&amp;gt; #include &amp;#34;tlpi_hdr.h&amp;#34; static char *str2; static int handled = 0; // 设置处理器函数，一旦遇上SIGINT，便对str2进行加密 static void handler(int sig) { crypt(str2, &amp;#34;xx&amp;#34;); handled++; } int main(int argc, char *argv[]) { char *cr1; int callNum, mismatch; struct sigaction sa; if (argc !</description>
     </item>
     <item>
       <title>在备选栈中处理信号</title>
-      <link>http://47.120.24.183/posts/tlpi/t_sigaltstack/</link>
+      <link>https://fireflyyh.top/posts/tlpi/t_sigaltstack/</link>
       <pubDate>Wed, 31 Jul 2024 00:00:00 +0000</pubDate>
-      <guid>http://47.120.24.183/posts/tlpi/t_sigaltstack/</guid>
+      <guid>https://fireflyyh.top/posts/tlpi/t_sigaltstack/</guid>
       <description>TLPI 21.3：在备选栈中处理信号：sigaltstack() 代码 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 static void sigsegvHandler(int sig) { int x; // 捕捉信号，并通过局部变量的位置来大致判断为当前函数所分配的空间处于什么位置 printf(&amp;#34;Caught signal %d (%s)\n&amp;#34;, sig, strsignal(sig)); printf(&amp;#34;Top of handler stack near %10p\n&amp;#34;, (void *)&amp;amp;x); // fflush(NULL)的作用是在程序异常终止前确保所有标准输出缓冲区的数据都被写入到相应的输出设备。 fflush(NULL); _exit(EXIT_FAILURE); } static void overflowStack(int callNum) { char a[100000]; // 此类分配数组方式为栈上分配 printf(&amp;#34;Call %4d - top of stack near %10p\n&amp;#34;, callNum, &amp;amp;a[0]); overflowStack(callNum + 1); // 无限递归调用，不断在栈上分配空间，每次分配100000字节以上 } int main(int argc, char *argv[]) { stack_t sigstack; struct sigaction sa; int j; printf(&amp;#34;Top of standard stack is near %10p\n&amp;#34;, (void *)&amp;amp;j); // 分配备用栈并通知内核 // 在堆当中分配备用栈 sigstack.</description>
     </item>
     <item>
       <title>将博客部署到阿里云服务器</title>
-      <link>http://47.120.24.183/posts/blog_configuration/deploy/</link>
+      <link>https://fireflyyh.top/posts/blog_configuration/deploy/</link>
       <pubDate>Sun, 28 Jul 2024 00:00:00 +0000</pubDate>
-      <guid>http://47.120.24.183/posts/blog_configuration/deploy/</guid>
+      <guid>https://fireflyyh.top/posts/blog_configuration/deploy/</guid>
       <description>之前搭建hexo博客，是将其部署到github中，通过github.io来访问，但是速度感人，所以本次尝试将hugo博客部署到阿里云服务器，通过域名进行访问，本文参考了hugo博客部署到腾讯云轻量级服务器。 由于是我第一次使用nginx，所以如果遇到什么问题，请多海涵并且可以参考其他博客或网络资料。
 在部署之前，我已经有了阿里云服务器（配置为2核2GB）、域国外平台购买的域名（staryh.top）。
 1. 服务器端下载并安装nginx 1.1 安装nginx 在ubuntu环境下： 安装nginx
@@ -43,16 +43,16 @@
     </item>
     <item>
       <title>在信号处理器函数中执行非本地跳转</title>
-      <link>http://47.120.24.183/posts/tlpi/sigmask_longjmp/</link>
+      <link>https://fireflyyh.top/posts/tlpi/sigmask_longjmp/</link>
       <pubDate>Sat, 27 Jul 2024 00:00:00 +0000</pubDate>
-      <guid>http://47.120.24.183/posts/tlpi/sigmask_longjmp/</guid>
+      <guid>https://fireflyyh.top/posts/tlpi/sigmask_longjmp/</guid>
       <description>TLPI 21.2.1：在信号处理器函数中执行非本地跳转 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 #define _GNU_SOURCE // 添加该定义以正常使用strsignal() #include &amp;lt;string.</description>
     </item>
     <item>
       <title>真题总结2</title>
-      <link>http://47.120.24.183/posts/408/%E7%9C%9F%E9%A2%98%E6%80%BB%E7%BB%932/</link>
+      <link>https://fireflyyh.top/posts/408/%E7%9C%9F%E9%A2%98%E6%80%BB%E7%BB%932/</link>
       <pubDate>Sun, 08 Oct 2023 17:45:20 +0800</pubDate>
-      <guid>http://47.120.24.183/posts/408/%E7%9C%9F%E9%A2%98%E6%80%BB%E7%BB%932/</guid>
+      <guid>https://fireflyyh.top/posts/408/%E7%9C%9F%E9%A2%98%E6%80%BB%E7%BB%932/</guid>
       <description>16年 单周期数据通路 单周期数据通路是一种简单的数据通路设计，每个时钟周期执行一条完整的指令，即每条指令的CPI为1，要考虑比较慢的指令，所以处理器的时钟频率较低。 这意味着每条指令执行过程中任何数据通路单元都只能被用一次，如果需要使用多次则必须将该数据通路单元复制多份。
 控制信号是CU根据指令操作码发出的信号，对于单周期处理器来说，每条指令的执行只有一个时钟周期，而在一个时钟周期内控制信号并不会变化。
 单周期数据通路必须有独立的指令存储器和数据存储器，因为处理器在一个周期内只能操作每个部件一次，而在一个周期内不可能对一个单端口存储器进行两次存取。且无法使用单总线数据通路，因为单总线数据通路将所有寄存器的输入出端都连接在一条公共通路上，一个时钟内只允许一次操作，无法完成指令的所有操作。
@@ -79,9 +79,9 @@ TSL指令实现互斥 1 2 3 4 5 6 do { while (TSL(&amp;amp;lock)); critical sect
     </item>
     <item>
       <title>真题总结1</title>
-      <link>http://47.120.24.183/posts/408/%E7%9C%9F%E9%A2%98%E6%80%BB%E7%BB%931/</link>
+      <link>https://fireflyyh.top/posts/408/%E7%9C%9F%E9%A2%98%E6%80%BB%E7%BB%931/</link>
       <pubDate>Sun, 24 Sep 2023 17:42:20 +0800</pubDate>
-      <guid>http://47.120.24.183/posts/408/%E7%9C%9F%E9%A2%98%E6%80%BB%E7%BB%931/</guid>
+      <guid>https://fireflyyh.top/posts/408/%E7%9C%9F%E9%A2%98%E6%80%BB%E7%BB%931/</guid>
       <description>10年 平衡二叉树的调整 LL调整 RR调整 RL调整 例如（原谅我图画的难看😂）：
 LR调整 二分查找的次数（成功失败）、折半查找判定树与二叉搜索树的关系 平衡二叉树是一种特殊的二叉查找树，它要求任何节点的两棵子树的高度差不超过1（同一棵树的不同节点的子树高度差可以为1、0、-1）。平衡二叉树通过在插入和删除节点时做旋转来维持树的平衡。
 折半查找判定树是一种特殊的平衡二叉树，它要求更加严格。同一棵树节点的左子树和右子树的差不能同时存在1和-1（即为统一向上取整或统一向下取整)。查找时，根据比较的结果折半排除一边的树。折半查找判定树中，只有最下面一层才可以不满。
@@ -117,16 +117,16 @@ I/O操作完成：当一个进程等待的I/O操作完成后，它的状态会�
     </item>
     <item>
       <title>Test</title>
-      <link>http://47.120.24.183/posts/test/</link>
+      <link>https://fireflyyh.top/posts/test/</link>
       <pubDate>Tue, 15 Sep 2020 11:30:03 +0000</pubDate>
-      <guid>http://47.120.24.183/posts/test/</guid>
+      <guid>https://fireflyyh.top/posts/test/</guid>
       <description>Blank</description>
     </item>
     <item>
       <title>About me</title>
-      <link>http://47.120.24.183/about/</link>
+      <link>https://fireflyyh.top/about/</link>
       <pubDate>Mon, 09 Sep 2002 07:00:34 +0800</pubDate>
-      <guid>http://47.120.24.183/about/</guid>
+      <guid>https://fireflyyh.top/about/</guid>
       <description>about</description>
     </item>
   </channel>
