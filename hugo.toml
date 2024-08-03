@@ -6,7 +6,7 @@ enableRobotsTXT = true
 buildDrafts = false
 buildFuture = false
 buildExpired = false
-googleAnalytics = "UA-123-45"
+googleAnalytics = true
 pygmentsUseClasses = true
 
 [minify]
@@ -85,8 +85,6 @@ tocopen = true
   name = "bilibili"
   url = "https://space.bilibili.com/473874141"
 
-[params.analytics.google]
-SiteVerificationTag = "G-312J6X210G"
 
 # [params.analytics.bing]
 # SiteVerificationTag = "XYZabc"
@@ -167,6 +165,6 @@ weight = 60
 
 [services]
   [services.googleAnalytics]
-    ID = 'G-312J6X210G'
+    ID = 'G-Y30PKHXBN4'
 
 
