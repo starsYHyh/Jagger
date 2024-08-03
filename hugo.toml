@@ -16,7 +16,7 @@ minifyOutput = true
 [params]
 env = "production"
 title = "Jagger's Blog"
-description = "Welcome to Jagger's blog!"
+description = "Halo!"
 keywords = [ "Blog", "Portfolio", "PaperMod" ]
 author = "Jagger"
 images = [ "<link or path of image for opengraph, twitter-cards>" ]
@@ -86,13 +86,10 @@ tocopen = true
   url = "https://space.bilibili.com/473874141"
 
 [params.analytics.google]
-SiteVerificationTag = "XYZabc"
+SiteVerificationTag = "G-312J6X210G"
 
-[params.analytics.bing]
-SiteVerificationTag = "XYZabc"
-
-[params.analytics.yandex]
-SiteVerificationTag = "XYZabc"
+# [params.analytics.bing]
+# SiteVerificationTag = "XYZabc"
 
   [params.cover]
   hidden = true
@@ -167,4 +164,9 @@ weight = 60
 
 [outputs]
   home = [ "HTML", "RSS", "JSON" ]
+
+[services]
+  [services.googleAnalytics]
+    ID = 'G-312J6X210G'
+
 
