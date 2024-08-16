@@ -28,6 +28,16 @@
       <description>TLPI 21.3：在备选栈中处理信号：sigaltstack() 代码 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 static void sigsegvHandler(int sig) { int x; // 捕捉信号，并通过局部变量的位置来大致判断为当前函数所分配的空间处于什么位置 printf(&amp;#34;Caught signal %d (%s)\n&amp;#34;, sig, strsignal(sig)); printf(&amp;#34;Top of handler stack near %10p\n&amp;#34;, (void *)&amp;amp;x); // fflush(NULL)的作用是在程序异常终止前确保所有标准输出缓冲区的数据都被写入到相应的输出设备。 fflush(NULL); _exit(EXIT_FAILURE); } static void overflowStack(int callNum) { char a[100000]; // 此类分配数组方式为栈上分配 printf(&amp;#34;Call %4d - top of stack near %10p\n&amp;#34;, callNum, &amp;amp;a[0]); overflowStack(callNum + 1); // 无限递归调用，不断在栈上分配空间，每次分配100000字节以上 } int main(int argc, char *argv[]) { stack_t sigstack; struct sigaction sa; int j; printf(&amp;#34;Top of standard stack is near %10p\n&amp;#34;, (void *)&amp;amp;j); // 分配备用栈并通知内核 // 在堆当中分配备用栈 sigstack.</description>
     </item>
     <item>
+      <title>处理SIGCHLD信号</title>
+      <link>https://fireflyyh.top/posts/unp/sigchldwaitpid/</link>
+      <pubDate>Wed, 31 Jul 2024 00:00:00 +0000</pubDate>
+      <guid>https://fireflyyh.top/posts/unp/sigchldwaitpid/</guid>
+      <description>处理SIGCHLD信号 1 2 3 4 5 6 7 8 9 10 11 12 void sig_chld(int signo) { pid_t pid; int stat; // wait()是为了清理僵死进程 // pid = wait(&amp;amp;stat); // printf(&amp;#34;child %d terminated\n&amp;#34;, pid); while ((pid = waitpid(-1, &amp;amp;stat, WNOHANG)) &amp;gt; 0) printf(&amp;#34;child %d terminated\n&amp;#34;, pid); return; } wait版本行不通的原因 若服务器和客户端在同一主机上，则该信号处理函数只执行过一次（根据UNP的描述是这样的，但是本人实测，信号处理器函数执行了两次）。 但是如果我们在不同的主机上运行客户和服务器，那么信号处理器函数一般执行两次：一次是由第一个产生的信号引起的，由于另外4个信号在信号处理函数第一次执行时发生，因为该处理函数仅仅再被调用一次，从而留下3个僵死进程。 不过有的时候，根据FIN到达主机的时机，信号处理函数可能会执行3次甚至4次
+根据本人猜想，如果在相同主机测试，由于没有网络数据传播时延的影响，本机的客户端所有五个FIN都几乎在同一时间传递给服务器， 从而使得服务器的5个子进程基本在同一时刻终止，从而5个SIGCHLD在同一时刻发送给父进程，都在第一个信号处理函数执行之前发生， 而Unix信号一般是不排队的（这里详见TLPI对应的小节），因此信号处理函数只执行一次。
+但是如果在不同主机测试，由于网络数据传播，各个FIN到达服务器的时间差较大一些，导致FIN以不可忽略的时差到达服务器。 例如在处理第一个SIGCHLD信号时，其他FIN才到达，从而引起信号处理函数执行多次。
+1 2 3 4 5 6 7 ➜ bin git:(main) ✗ ./TCPSERV03 &amp;amp; [1] 65001 ➜ bin git:(main) ✗ .</description>
+    </item>
+    <item>
       <title>将博客部署到阿里云服务器</title>
       <link>https://fireflyyh.top/posts/blog_configuration/deploy/</link>
       <pubDate>Sun, 28 Jul 2024 00:00:00 +0000</pubDate>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>UNP on Jagger&#39;s Blog</title>
+    <link>https://fireflyyh.top/tags/unp/</link>
+    <description>Recent content in UNP on Jagger&#39;s Blog</description>
+    <image>
+      <title>Jagger&#39;s Blog</title>
+      <url>https://fireflyyh.top/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</url>
+      <link>https://fireflyyh.top/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</link>
+    </image>
+    <generator>Hugo -- 0.129.0</generator>
+    <language>en</language>
+    <lastBuildDate>Wed, 31 Jul 2024 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://fireflyyh.top/tags/unp/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>处理SIGCHLD信号</title>
+      <link>https://fireflyyh.top/posts/unp/sigchldwaitpid/</link>
+      <pubDate>Wed, 31 Jul 2024 00:00:00 +0000</pubDate>
+      <guid>https://fireflyyh.top/posts/unp/sigchldwaitpid/</guid>
+      <description>处理SIGCHLD信号 1 2 3 4 5 6 7 8 9 10 11 12 void sig_chld(int signo) { pid_t pid; int stat; // wait()是为了清理僵死进程 // pid = wait(&amp;amp;stat); // printf(&amp;#34;child %d terminated\n&amp;#34;, pid); while ((pid = waitpid(-1, &amp;amp;stat, WNOHANG)) &amp;gt; 0) printf(&amp;#34;child %d terminated\n&amp;#34;, pid); return; } wait版本行不通的原因 若服务器和客户端在同一主机上，则该信号处理函数只执行过一次（根据UNP的描述是这样的，但是本人实测，信号处理器函数执行了两次）。 但是如果我们在不同的主机上运行客户和服务器，那么信号处理器函数一般执行两次：一次是由第一个产生的信号引起的，由于另外4个信号在信号处理函数第一次执行时发生，因为该处理函数仅仅再被调用一次，从而留下3个僵死进程。 不过有的时候，根据FIN到达主机的时机，信号处理函数可能会执行3次甚至4次
+根据本人猜想，如果在相同主机测试，由于没有网络数据传播时延的影响，本机的客户端所有五个FIN都几乎在同一时间传递给服务器， 从而使得服务器的5个子进程基本在同一时刻终止，从而5个SIGCHLD在同一时刻发送给父进程，都在第一个信号处理函数执行之前发生， 而Unix信号一般是不排队的（这里详见TLPI对应的小节），因此信号处理函数只执行一次。
+但是如果在不同主机测试，由于网络数据传播，各个FIN到达服务器的时间差较大一些，导致FIN以不可忽略的时差到达服务器。 例如在处理第一个SIGCHLD信号时，其他FIN才到达，从而引起信号处理函数执行多次。
+1 2 3 4 5 6 7 ➜ bin git:(main) ✗ ./TCPSERV03 &amp;amp; [1] 65001 ➜ bin git:(main) ✗ .</description>
+    </item>
+  </channel>
+</rss>
