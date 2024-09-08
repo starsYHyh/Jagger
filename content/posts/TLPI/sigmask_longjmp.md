@@ -9,7 +9,7 @@ categories: ["Learning"]
 ## TLPI 21.2.1：在信号处理器函数中执行非本地跳转
 
 ```c
-#define _GNU_SOURCE // 添加该定义以正常使用strsignal()
+#define _GNU_SOURCE // 添加该定义以正常使用strsignal()、sigaction()
 #include <string.h>
 #include <setjmp.h>
 #include <signal.h>
