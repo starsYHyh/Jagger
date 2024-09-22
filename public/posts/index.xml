@@ -11,8 +11,21 @@
     </image>
     <generator>Hugo -- 0.129.0</generator>
     <language>en</language>
-    <lastBuildDate>Sat, 07 Sep 2024 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 22 Sep 2024 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://fireflyyh.top/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>C语言程序设计第二版课后习题--第一章</title>
+      <link>https://fireflyyh.top/posts/tcpl/ch01/</link>
+      <pubDate>Sun, 22 Sep 2024 00:00:00 +0000</pubDate>
+      <guid>https://fireflyyh.top/posts/tcpl/ch01/</guid>
+      <description>环境gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0。使用gcc Exercise1-1.c命令。
+exercise1-1 在你自己的系统中运行“hello, world”程序。再有意去掉程序中的部分内容，看看会得到什么出错信息。
+1 2 3 4 5 #include &amp;lt;stdio.h&amp;gt; main() { printf(&amp;#34;hello world!&amp;#34;); } 除去头文件 不报错且能运行，但是会有警告warning: implicit declaration of function ‘printf’ [-Wimplicit-function-declaration]。
+除去返回类型 不报错且能运行，但是会有警告warning: return type defaults to ‘int’ [-Wimplicit-int]。
+exercise1-2 做个实验，当 printf 函数的参数字符串中包含\c（其中 c 是上面的转义字符序列中未曾列出的某一个字符）时，观察一下会出现什么情况。
+exercise1-3 修改温度转换程序，使之能在转换表的顶部打印一个标题
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 #include &amp;lt;stdio.h&amp;gt; int main() { float celsius; int fahr = 0, upper = 300, step = 30; printf(&amp;#34;fahr to celsius\n&amp;#34;); while (fahr &amp;lt;= upper) { celsius = (5.</description>
+    </item>
     <item>
       <title>硬件产生的信号</title>
       <link>https://fireflyyh.top/posts/tlpi/demo_sigfpe/</link>
