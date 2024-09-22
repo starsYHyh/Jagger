@@ -27,6 +27,22 @@ exercise1-3 修改温度转换程序，使之能在转换表的顶部打印一�
 1 2 3 4 5 6 7 8 9 10 11 12 13 14 #include &amp;lt;stdio.h&amp;gt; int main() { float celsius; int fahr = 0, upper = 300, step = 30; printf(&amp;#34;fahr to celsius\n&amp;#34;); while (fahr &amp;lt;= upper) { celsius = (5.</description>
     </item>
     <item>
+      <title>SSH密钥登陆</title>
+      <link>https://fireflyyh.top/posts/linux/ssh/</link>
+      <pubDate>Sun, 08 Sep 2024 00:00:00 +0000</pubDate>
+      <guid>https://fireflyyh.top/posts/linux/ssh/</guid>
+      <description>阿里云 尝试使用windows客户端登录阿里云服务器，参考了10分钟手把手教你通过SSH，使用密钥/账号远程登录Linux服务器（Windows/macOS）
+客户端生成密钥 进入到C:\Users\用户名\.ssh目录下，若没有公钥和私钥文件，则进行生成。
+执行ssh-keygen命令，之后一路回车，然后在该目录下会出现ida_rsa和ida_rsa.pub两个文件，分别存放私钥和公钥。
+部署公钥 使用密码登录服务器，在用户目录下进入到.ssh文件夹，创建或编辑authorized_keys文件，将上一步获得的公钥内容复制并追加到该文件中。
+中科大vlab Vlab实验中心，参考帮助文档
+下载私钥 进入到管理界面，下载私钥vlab-vm9164.pem。
+本地配置 将该私钥文件放置到本地C:\Users\用户名\.ssh文件夹之下，并重命名为vlab.pem。
+然后即可以在 cmd 中使用ssh -i ~/.ssh/vlab.pem ubuntu@vlab.ustc.edu.cn来登录到远程主机。
+配置文件 如果需要使用vscode来进行操作，则可以使用SSH配置文件。进入到C:\Users\用户名\.ssh文件夹之下，创建或编辑config文件。然后最好使用 vscode 打开该文件并编辑，追加以下内容：
+1 2 3 4 Host vlab HostName vlab.ustc.edu.cn User ubuntu IdentityFile ~/.ssh/vlab.pem 之后在vscode中就可以方便地进行连接了。</description>
+    </item>
+    <item>
       <title>硬件产生的信号</title>
       <link>https://fireflyyh.top/posts/tlpi/demo_sigfpe/</link>
       <pubDate>Sat, 07 Sep 2024 00:00:00 +0000</pubDate>

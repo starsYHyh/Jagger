@@ -1,7 +1,7 @@
 ---
 title: "SSH密钥登陆"
 date: 2024-09-08
-draft: true
+draft: false
 tags: ["Linux", "configuration"]
 categories: ["Learning"]
 ---
