@@ -11,20 +11,30 @@
     </image>
     <generator>Hugo -- 0.129.0</generator>
     <language>en</language>
-    <lastBuildDate>Sun, 22 Sep 2024 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 29 Sep 2024 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://fireflyyh.top/tags/tcpl/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>C语言程序设计第二版课后习题--第二章</title>
+      <link>https://fireflyyh.top/posts/tcpl/ch02/</link>
+      <pubDate>Sun, 29 Sep 2024 00:00:00 +0000</pubDate>
+      <guid>https://fireflyyh.top/posts/tcpl/ch02/</guid>
+      <description>环境gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0，使用Makefile文件中的配置来编译。
+部分答案参考了官方题解和网上的答案，仅供参考，可能也有部分bug未发现或解决。
+exercise2-1 编写一个程序以确定分别由 signed 及 unsigned 限定的 char、short、int 与 long 类型变量的取值范围。采用打印标准头文件中的相应值以及直接计算两种方式实现。后一种方法的实现较困难一些，因为要确定各种浮点类型的取值范围。
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 #include &amp;lt;stdio.h&amp;gt; #include &amp;lt;limits.h&amp;gt; int main() { printf(&amp;#34;Size of char %d\n&amp;#34;, CHAR_BIT); printf(&amp;#34;Size of char max %d\n&amp;#34;, CHAR_MAX); printf(&amp;#34;Size of char min %d\n&amp;#34;, CHAR_MIN); printf(&amp;#34;Size of short min %d\n&amp;#34;, SHRT_MIN); printf(&amp;#34;Size of short max %d\n&amp;#34;, SHRT_MAX); printf(&amp;#34;Size of int min %d\n&amp;#34;, INT_MIN); printf(&amp;#34;Size of int max %d\n&amp;#34;, INT_MAX); printf(&amp;#34;Size of long min %ld\n&amp;#34;, LONG_MIN); printf(&amp;#34;Size of long max %ld\n&amp;#34;, LONG_MAX); printf(&amp;#34;Size of unsigned char %u\n&amp;#34;, UCHAR_MAX); printf(&amp;#34;Size of unsigned short %u\n&amp;#34;, USHRT_MAX); printf(&amp;#34;Size of unsigned int %u\n&amp;#34;, UINT_MAX); printf(&amp;#34;Size of unsigned long %lu\n&amp;#34;, ULONG_MAX); return 0; } 1 2 3 4 5 6 7 8 9 10 11 12 13 Size of char 8 Size of char max 127 Size of char min -128 Size of short min -32768 Size of short max 32767 Size of int min -2147483648 Size of int max 2147483647 Size of long min -9223372036854775808 Size of long max 9223372036854775807 Size of unsigned char 255 Size of unsigned short 65535 Size of unsigned int 4294967295 Size of unsigned long 18446744073709551615 exercise2-2 在不使用运算符&amp;amp;&amp;amp;或||的条件下编写一个与上面的 for 循环语句等价的循环语句。</description>
+    </item>
     <item>
       <title>C语言程序设计第二版课后习题--第一章</title>
       <link>https://fireflyyh.top/posts/tcpl/ch01/</link>
-      <pubDate>Sun, 22 Sep 2024 00:00:00 +0000</pubDate>
+      <pubDate>Sat, 28 Sep 2024 00:00:00 +0000</pubDate>
       <guid>https://fireflyyh.top/posts/tcpl/ch01/</guid>
-      <description>环境gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0。使用gcc Exercise1-1.c命令。
+      <description>环境gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0，使用Makefile文件中的配置来编译。
+部分答案参考了官方题解和网上的答案，仅供参考，可能也有部分bug未发现或解决。
 exercise1-1 在你自己的系统中运行“hello, world”程序。再有意去掉程序中的部分内容，看看会得到什么出错信息。
-1 2 3 4 5 #include &amp;lt;stdio.h&amp;gt; main() { printf(&amp;#34;hello world!&amp;#34;); } 除去头文件 不报错且能运行，但是会有警告warning: implicit declaration of function ‘printf’ [-Wimplicit-function-declaration]。
+1 2 3 main() { printf(&amp;#34;hello world!&amp;#34;); } 除去头文件 不报错且能运行，但是会有警告warning: implicit declaration of function ‘printf’ [-Wimplicit-function-declaration]。
 除去返回类型 不报错且能运行，但是会有警告warning: return type defaults to ‘int’ [-Wimplicit-int]。
 exercise1-2 做个实验，当 printf 函数的参数字符串中包含\c（其中 c 是上面的转义字符序列中未曾列出的某一个字符）时，观察一下会出现什么情况。
-exercise1-3 修改温度转换程序，使之能在转换表的顶部打印一个标题
-1 2 3 4 5 6 7 8 9 10 11 12 13 14 #include &amp;lt;stdio.h&amp;gt; int main() { float celsius; int fahr = 0, upper = 300, step = 30; printf(&amp;#34;fahr to celsius\n&amp;#34;); while (fahr &amp;lt;= upper) { celsius = (5.</description>
+1 2 3 4 5 6 7 8 9 10 int main(void) { printf(&amp;#34;Experiment\f to find out what\f happens when \fprintf &amp;#39;s argument string contains \\c\n&amp;#34;); printf(&amp;#34;---------\n&amp;#34;); printf(&amp;#34;Experiment\v to find out what \vhappens when printf &amp;#39;s \vargument string contains \\c\n&amp;#34;); printf(&amp;#34;---------\n&amp;#34;); printf(&amp;#34;Experiment\r to find out what \rhappens when printf &amp;#39;s \rargument string contains \\c\n&amp;#34;); printf(&amp;#34;---------\n&amp;#34;); return 0; } 1 2 3 4 5 6 7 8 9 10 11 12 Experiment to find out what happens when printf &amp;#39;s argument string contains \c --------- Experiment to find out what happens when printf &amp;#39;s argument string contains \c --------- argument string contains \c --------- exercise1-3 修改温度转换程序，使之能在转换表的顶部打印一个标题</description>
     </item>
   </channel>
 </rss>
