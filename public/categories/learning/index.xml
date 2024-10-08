@@ -11,8 +11,17 @@
     </image>
     <generator>Hugo -- 0.129.0</generator>
     <language>en</language>
-    <lastBuildDate>Sun, 29 Sep 2024 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 08 Oct 2024 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://fireflyyh.top/categories/learning/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>C语言程序设计第二版课后习题--第三章</title>
+      <link>https://fireflyyh.top/posts/tcpl/ch03/</link>
+      <pubDate>Tue, 08 Oct 2024 00:00:00 +0000</pubDate>
+      <guid>https://fireflyyh.top/posts/tcpl/ch03/</guid>
+      <description>CH03 exercise3-1 在上面有关折半查找的例子中，while 循环语句内共执行了两次测试，其实只要一次就足够（代价是将更多的测试在循环外执行）。重写该函数，使得在循环内部只执行一次测试。比较两种版本函数的运行时间。
+代码：
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 #include &amp;lt;stdio.h&amp;gt; #include &amp;lt;time.h&amp;gt; int binsearch(int x, int v[], int n) { int low, mid, high; low = 0; high = n - 1; while (low &amp;lt;= high) { mid = (low + high) / 2; if (x &amp;lt; v[mid]) high = mid - 1; else if (x &amp;gt; v[mid]) low = mid + 1; else return mid; } return -1; } int binsearch2(int x, int v[], int n) { int low, high, mid; low = 0; high = n - 1; mid = (low + high) / 2; while (low &amp;lt;= high &amp;amp;&amp;amp; v[mid] !</description>
+    </item>
     <item>
       <title>C语言程序设计第二版课后习题--第二章</title>
       <link>https://fireflyyh.top/posts/tcpl/ch02/</link>
