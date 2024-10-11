@@ -11,24 +11,42 @@
     </image>
     <generator>Hugo -- 0.129.0</generator>
     <language>en</language>
-    <lastBuildDate>Tue, 08 Oct 2024 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 11 Oct 2024 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://fireflyyh.top/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>C语言程序设计第二版课后习题--第五章</title>
+      <link>https://fireflyyh.top/posts/tcpl/ch05/</link>
+      <pubDate>Fri, 11 Oct 2024 00:00:00 +0000</pubDate>
+      <guid>https://fireflyyh.top/posts/tcpl/ch05/</guid>
+      <description>部分答案参考了官方题解和网上的答案，仅供参考，可能也有部分bug未发现或解决。代码在gitee上面。一些题目因个人能力不足，写不出来，看着答案都不会写的那种😭。
+exercise5-1 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 int getint(int *pn) { int c, sign; while (isspace(c = getch())) /* skip white space */ ; if (!isdigit(c) &amp;amp;&amp;amp; c != EOF &amp;amp;&amp;amp; c != &amp;#39;+&amp;#39; &amp;amp;&amp;amp; c != &amp;#39;-&amp;#39;) { ungetch(c); /* it is not a number */ return 0; } sign = (c == &amp;#39;-&amp;#39;) ?</description>
+    </item>
+    <item>
+      <title>C语言程序设计第二版课后习题--第四章</title>
+      <link>https://fireflyyh.top/posts/tcpl/ch04/</link>
+      <pubDate>Thu, 10 Oct 2024 00:00:00 +0000</pubDate>
+      <guid>https://fireflyyh.top/posts/tcpl/ch04/</guid>
+      <description>部分答案参考了官方题解和网上的答案，仅供参考，可能也有部分bug未发现或解决。代码在gitee上面。
+exercise4-1 编写函数 strindex(s, t)，它返回字符串 t 在 s 中最右边出现的位置。如果 s 中不包含 t，则返回-1。
+代码：
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 void getLine(char s[]) { int c, i = 0; while ((c = getchar()) != EOF &amp;amp;&amp;amp; c != &amp;#39;\n&amp;#39;) s[i++] = c; } int strindex(char s[], char t[]) { int i, j, k; int lens = strlen(s), lent = strlen(t); for (i = lens - 1; i &amp;gt;= 0; i--) { for (j = lent - 1, k = i; j &amp;gt;= 0 &amp;amp;&amp;amp; k &amp;gt;= 0 &amp;amp;&amp;amp; s[k] == t[j]; j--, k--); if (j &amp;lt; 0) return k + 1; } return -1; } int main() { char s[MAXLEN] = {0}; char t[MAXLEN] = {0}; printf(&amp;#34;Please input the string s: \n&amp;#34;); getLine(s); printf(&amp;#34;Please input the string t: \n&amp;#34;); getLine(t); printf(&amp;#34;The rightmost position of &amp;#39;%s&amp;#39; in &amp;#39;%s&amp;#39; is: %d\n&amp;#34;, t, s, strindex(s, t)); return 0; } 运行：</description>
+    </item>
     <item>
       <title>C语言程序设计第二版课后习题--第三章</title>
       <link>https://fireflyyh.top/posts/tcpl/ch03/</link>
       <pubDate>Tue, 08 Oct 2024 00:00:00 +0000</pubDate>
       <guid>https://fireflyyh.top/posts/tcpl/ch03/</guid>
-      <description>CH03 exercise3-1 在上面有关折半查找的例子中，while 循环语句内共执行了两次测试，其实只要一次就足够（代价是将更多的测试在循环外执行）。重写该函数，使得在循环内部只执行一次测试。比较两种版本函数的运行时间。
+      <description>部分答案参考了网络上的答案和官方题解。代码在gitee上面。
+exercise3-1 在上面有关折半查找的例子中，while 循环语句内共执行了两次测试，其实只要一次就足够（代价是将更多的测试在循环外执行）。重写该函数，使得在循环内部只执行一次测试。比较两种版本函数的运行时间。
 代码：
-1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 #include &amp;lt;stdio.h&amp;gt; #include &amp;lt;time.h&amp;gt; int binsearch(int x, int v[], int n) { int low, mid, high; low = 0; high = n - 1; while (low &amp;lt;= high) { mid = (low + high) / 2; if (x &amp;lt; v[mid]) high = mid - 1; else if (x &amp;gt; v[mid]) low = mid + 1; else return mid; } return -1; } int binsearch2(int x, int v[], int n) { int low, high, mid; low = 0; high = n - 1; mid = (low + high) / 2; while (low &amp;lt;= high &amp;amp;&amp;amp; v[mid] !</description>
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 #include &amp;lt;stdio.h&amp;gt; #include &amp;lt;time.</description>
     </item>
     <item>
       <title>C语言程序设计第二版课后习题--第二章</title>
       <link>https://fireflyyh.top/posts/tcpl/ch02/</link>
       <pubDate>Sun, 29 Sep 2024 00:00:00 +0000</pubDate>
       <guid>https://fireflyyh.top/posts/tcpl/ch02/</guid>
-      <description>环境gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0，使用Makefile文件中的配置来编译。
-部分答案参考了官方题解和网上的答案，仅供参考，可能也有部分bug未发现或解决。
+      <description>部分答案参考了官方题解和网上的答案，仅供参考，可能也有部分bug未发现或解决。代码在gitee上面。
 exercise2-1 编写一个程序以确定分别由 signed 及 unsigned 限定的 char、short、int 与 long 类型变量的取值范围。采用打印标准头文件中的相应值以及直接计算两种方式实现。后一种方法的实现较困难一些，因为要确定各种浮点类型的取值范围。
 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 #include &amp;lt;stdio.h&amp;gt; #include &amp;lt;limits.h&amp;gt; int main() { printf(&amp;#34;Size of char %d\n&amp;#34;, CHAR_BIT); printf(&amp;#34;Size of char max %d\n&amp;#34;, CHAR_MAX); printf(&amp;#34;Size of char min %d\n&amp;#34;, CHAR_MIN); printf(&amp;#34;Size of short min %d\n&amp;#34;, SHRT_MIN); printf(&amp;#34;Size of short max %d\n&amp;#34;, SHRT_MAX); printf(&amp;#34;Size of int min %d\n&amp;#34;, INT_MIN); printf(&amp;#34;Size of int max %d\n&amp;#34;, INT_MAX); printf(&amp;#34;Size of long min %ld\n&amp;#34;, LONG_MIN); printf(&amp;#34;Size of long max %ld\n&amp;#34;, LONG_MAX); printf(&amp;#34;Size of unsigned char %u\n&amp;#34;, UCHAR_MAX); printf(&amp;#34;Size of unsigned short %u\n&amp;#34;, USHRT_MAX); printf(&amp;#34;Size of unsigned int %u\n&amp;#34;, UINT_MAX); printf(&amp;#34;Size of unsigned long %lu\n&amp;#34;, ULONG_MAX); return 0; } 1 2 3 4 5 6 7 8 9 10 11 12 13 Size of char 8 Size of char max 127 Size of char min -128 Size of short min -32768 Size of short max 32767 Size of int min -2147483648 Size of int max 2147483647 Size of long min -9223372036854775808 Size of long max 9223372036854775807 Size of unsigned char 255 Size of unsigned short 65535 Size of unsigned int 4294967295 Size of unsigned long 18446744073709551615 exercise2-2 在不使用运算符&amp;amp;&amp;amp;或||的条件下编写一个与上面的 for 循环语句等价的循环语句。</description>
     </item>
@@ -37,8 +55,7 @@ exercise2-1 编写一个程序以确定分别由 signed 及 unsigned 限定的 c
       <link>https://fireflyyh.top/posts/tcpl/ch01/</link>
       <pubDate>Sat, 28 Sep 2024 00:00:00 +0000</pubDate>
       <guid>https://fireflyyh.top/posts/tcpl/ch01/</guid>
-      <description>环境gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0，使用Makefile文件中的配置来编译。
-部分答案参考了官方题解和网上的答案，仅供参考，可能也有部分bug未发现或解决。
+      <description>部分答案参考了官方题解和网上的答案，仅供参考，可能也有部分bug未发现或解决。代码在gitee上面。
 exercise1-1 在你自己的系统中运行“hello, world”程序。再有意去掉程序中的部分内容，看看会得到什么出错信息。
 1 2 3 main() { printf(&amp;#34;hello world!&amp;#34;); } 除去头文件 不报错且能运行，但是会有警告warning: implicit declaration of function ‘printf’ [-Wimplicit-function-declaration]。
 除去返回类型 不报错且能运行，但是会有警告warning: return type defaults to ‘int’ [-Wimplicit-int]。
