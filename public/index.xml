@@ -11,15 +11,41 @@
     </image>
     <generator>Hugo -- 0.129.0</generator>
     <language>en</language>
-    <lastBuildDate>Fri, 11 Oct 2024 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 23 Oct 2024 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://fireflyyh.top/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>C语言程序设计第二版课后习题--第八章</title>
+      <link>https://fireflyyh.top/posts/tcpl/ch08/</link>
+      <pubDate>Wed, 23 Oct 2024 00:00:00 +0000</pubDate>
+      <guid>https://fireflyyh.top/posts/tcpl/ch08/</guid>
+      <description>部分答案参考了官方题解和网上的答案，仅供参考，可能也有部分bug未发现或解决。
+exercise8-1 用 read、write、open 和 close 系统调用代替标准库中功能等价的函数，重写第 7 章的 cat 程序，并通过实验比较两个版本的相对执行速度。
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 void filecopy(int ifp, int ofp) { char buf[BUFSIZE]; int n; while ((n = read(ifp, buf, BUFSIZE)) &amp;gt; 0) if (write(ofp, buf, n) !</description>
+    </item>
+    <item>
+      <title>C语言程序设计第二版课后习题--第七章</title>
+      <link>https://fireflyyh.top/posts/tcpl/ch07/</link>
+      <pubDate>Sat, 19 Oct 2024 00:00:00 +0000</pubDate>
+      <guid>https://fireflyyh.top/posts/tcpl/ch07/</guid>
+      <description>部分答案参考了官方题解和网上的答案，仅供参考，可能也有部分bug未发现或解决。
+exercise7-1 编写一个程序，根据它自身被调用时存放在argv[0]中的名字，实现将大写字母转换为小写字母或将小写字母转换为大写字母的功能。
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 #include &amp;lt;stdio.h&amp;gt; #include &amp;lt;stdlib.h&amp;gt; #include &amp;lt;ctype.h&amp;gt; #include &amp;lt;string.h&amp;gt; int main(int argc, char **argv) { int (*handler[2])(int) = {tolower, toupper}; int type = strcmp(argv[0], &amp;#34;./lower&amp;#34;) == 0 ? 0 : strcmp(argv[0], &amp;#34;./upper&amp;#34;) == 0 ? 1 : -1; if (type == -1) { fprintf(stderr, &amp;#34;Usage: %s [lower|upper]\n&amp;#34;, argv[0]); } else { int c; while ((c = getchar()) !</description>
+    </item>
+    <item>
+      <title>C语言程序设计第二版课后习题--第六章</title>
+      <link>https://fireflyyh.top/posts/tcpl/ch06/</link>
+      <pubDate>Fri, 18 Oct 2024 00:00:00 +0000</pubDate>
+      <guid>https://fireflyyh.top/posts/tcpl/ch06/</guid>
+      <description>部分答案参考了官方题解和网上的答案，仅供参考，可能也有部分bug未发现或解决。
+exercise6-1 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 #define NKEYS (sizeof keytab / sizeof(keytab[0])) int binsearch(char *word, struct key tab[], int n) { int cond; int low, high, mid; low = 0; high = n - 1; while (low &amp;lt;= high) { mid = (low + high) / 2; if ((cond = strcmp(word, tab[mid].</description>
+    </item>
     <item>
       <title>C语言程序设计第二版课后习题--第五章</title>
       <link>https://fireflyyh.top/posts/tcpl/ch05/</link>
-      <pubDate>Fri, 11 Oct 2024 00:00:00 +0000</pubDate>
+      <pubDate>Sat, 12 Oct 2024 00:00:00 +0000</pubDate>
       <guid>https://fireflyyh.top/posts/tcpl/ch05/</guid>
-      <description>部分答案参考了官方题解和网上的答案，仅供参考，可能也有部分bug未发现或解决。代码在gitee上面。一些题目因个人能力不足，写不出来，看着答案都不会写的那种😭。
-exercise5-1 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 int getint(int *pn) { int c, sign; while (isspace(c = getch())) /* skip white space */ ; if (!isdigit(c) &amp;amp;&amp;amp; c != EOF &amp;amp;&amp;amp; c != &amp;#39;+&amp;#39; &amp;amp;&amp;amp; c != &amp;#39;-&amp;#39;) { ungetch(c); /* it is not a number */ return 0; } sign = (c == &amp;#39;-&amp;#39;) ?</description>
+      <description>部分答案参考了官方题解和网上的答案，仅供参考，可能也有部分bug未发现或解决。
+exerrcise5-1 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 int getint(int *pn) { int c, sign; while (isspace(c = getch())) /* skip white space */ ; if (!isdigit(c) &amp;amp;&amp;amp; c != EOF &amp;amp;&amp;amp; c != &amp;#39;+&amp;#39; &amp;amp;&amp;amp; c != &amp;#39;-&amp;#39;) { ungetch(c); /* it is not a number */ return 0; } sign = (c == &amp;#39;-&amp;#39;) ?</description>
     </item>
     <item>
       <title>C语言程序设计第二版课后习题--第四章</title>

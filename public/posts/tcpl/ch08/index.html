@@ -1,0 +1,847 @@
+<!doctype html><html lang=en dir=auto><head><meta charset=utf-8><meta http-equiv=X-UA-Compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><meta name=robots content="index, follow"><title>C语言程序设计第二版课后习题--第八章 | Jagger's Blog</title>
+<meta name=keywords content="TCPL"><meta name=description content="部分答案参考了官方题解和网上的答案，仅供参考，可能也有部分bug未发现或解决。
+exercise8-1 用 read、write、open 和 close 系统调用代替标准库中功能等价的函数，重写第 7 章的 cat 程序，并通过实验比较两个版本的相对执行速度。
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 void filecopy(int ifp, int ofp) { char buf[BUFSIZE]; int n; while ((n = read(ifp, buf, BUFSIZE)) > 0) if (write(ofp, buf, n) !"><meta name=author content="Jagger"><link rel=canonical href=https://fireflyyh.top/posts/tcpl/ch08/><link crossorigin=anonymous href=/assets/css/stylesheet.1212f0454c490726d67933de27a90315a6177ba895fb506fe0f2bd6e93b66acd.css integrity="sha256-EhLwRUxJBybWeTPeJ6kDFaYXe6iV+1Bv4PK9bpO2as0=" rel="preload stylesheet" as=style><link rel=icon href=https://fireflyyh.top/img/yuan.jpg><link rel=icon type=image/png sizes=16x16 href=https://fireflyyh.top/%3Clink%20/%20abs%20url%3E><link rel=icon type=image/png sizes=32x32 href=https://fireflyyh.top/%3Clink%20/%20abs%20url%3E><link rel=apple-touch-icon href=https://fireflyyh.top/%3Clink%20/%20abs%20url%3E><link rel=mask-icon href=https://fireflyyh.top/%3Clink%20/%20abs%20url%3E><meta name=theme-color content="#2e2e33"><meta name=msapplication-TileColor content="#2e2e33"><link rel=alternate hreflang=en href=https://fireflyyh.top/posts/tcpl/ch08/><noscript><style>#theme-toggle,.top-link{display:none}</style><style>@media(prefers-color-scheme:dark){:root{--theme:rgb(29, 30, 32);--entry:rgb(46, 46, 51);--primary:rgb(218, 218, 219);--secondary:rgb(155, 156, 157);--tertiary:rgb(65, 66, 68);--content:rgb(196, 196, 197);--code-block-bg:rgb(46, 46, 51);--code-bg:rgb(55, 56, 62);--border:rgb(51, 51, 51)}.list{background:var(--theme)}.list:not(.dark)::-webkit-scrollbar-track{background:0 0}.list:not(.dark)::-webkit-scrollbar-thumb{border-color:var(--theme)}}</style></noscript><script>var _hmt=_hmt||[];(function(){var e,t=document.createElement("script");t.src="https://hm.baidu.com/hm.js?87f1888ba5320e03987ecde7525fde2d",e=document.getElementsByTagName("script")[0],e.parentNode.insertBefore(t,e)})()</script><script type=text/javascript async src="https://cdn.bootcss.com/mathjax/2.7.3/MathJax.js?config=TeX-AMS-MML_HTMLorMML">MathJax.Hub.Config({tex2jax:{inlineMath:[["$","$"],["\\(","\\)"]],displayMath:[["$$","$$"],["[[","]]"]],processEscapes:!0,processEnvironments:!0,skipTags:["script","noscript","style","textarea","pre"],TeX:{equationNumbers:{autoNumber:"AMS"},extensions:["AMSmath.js","AMSsymbols.js"]}}}),MathJax.Hub.Queue(function(){var e,t=MathJax.Hub.getAllJax();for(e=0;e<t.length;e+=1)t[e].SourceElement().parentNode.className+=" has-jax"})</script><style>code.has-jax{font:inherit;font-size:100%;background:inherit;border:inherit;color:#515151}</style><script async src="https://www.googletagmanager.com/gtag/js?id=G-Y30PKHXBN4"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-Y30PKHXBN4")</script><meta property="og:title" content="C语言程序设计第二版课后习题--第八章"><meta property="og:description" content="部分答案参考了官方题解和网上的答案，仅供参考，可能也有部分bug未发现或解决。
+exercise8-1 用 read、write、open 和 close 系统调用代替标准库中功能等价的函数，重写第 7 章的 cat 程序，并通过实验比较两个版本的相对执行速度。
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 void filecopy(int ifp, int ofp) { char buf[BUFSIZE]; int n; while ((n = read(ifp, buf, BUFSIZE)) > 0) if (write(ofp, buf, n) !"><meta property="og:type" content="article"><meta property="og:url" content="https://fireflyyh.top/posts/tcpl/ch08/"><meta property="og:image" content="https://fireflyyh.top/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E"><meta property="article:section" content="posts"><meta property="article:published_time" content="2024-10-23T00:00:00+00:00"><meta property="article:modified_time" content="2024-10-23T00:00:00+00:00"><meta property="og:site_name" content="Jagger's Blog"><meta name=twitter:card content="summary_large_image"><meta name=twitter:image content="https://fireflyyh.top/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E"><meta name=twitter:title content="C语言程序设计第二版课后习题--第八章"><meta name=twitter:description content="部分答案参考了官方题解和网上的答案，仅供参考，可能也有部分bug未发现或解决。
+exercise8-1 用 read、write、open 和 close 系统调用代替标准库中功能等价的函数，重写第 7 章的 cat 程序，并通过实验比较两个版本的相对执行速度。
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 void filecopy(int ifp, int ofp) { char buf[BUFSIZE]; int n; while ((n = read(ifp, buf, BUFSIZE)) > 0) if (write(ofp, buf, n) !"><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Posts","item":"https://fireflyyh.top/posts/"},{"@type":"ListItem","position":2,"name":"C语言程序设计第二版课后习题--第八章","item":"https://fireflyyh.top/posts/tcpl/ch08/"}]}</script><script type=application/ld+json>{"@context":"https://schema.org","@type":"BlogPosting","headline":"C语言程序设计第二版课后习题--第八章","name":"C语言程序设计第二版课后习题--第八章","description":"部分答案参考了官方题解和网上的答案，仅供参考，可能也有部分bug未发现或解决。\nexercise8-1 用 read、write、open 和 close 系统调用代替标准库中功能等价的函数，重写第 7 章的 cat 程序，并通过实验比较两个版本的相对执行速度。\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 void filecopy(int ifp, int ofp) { char buf[BUFSIZE]; int n; while ((n = read(ifp, buf, BUFSIZE)) \u0026gt; 0) if (write(ofp, buf, n) !","keywords":["TCPL"],"articleBody":" 部分答案参考了官方题解和网上的答案，仅供参考，可能也有部分bug未发现或解决。\nexercise8-1 用 read、write、open 和 close 系统调用代替标准库中功能等价的函数，重写第 7 章的 cat 程序，并通过实验比较两个版本的相对执行速度。\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 void filecopy(int ifp, int ofp) { char buf[BUFSIZE]; int n; while ((n = read(ifp, buf, BUFSIZE)) \u003e 0) if (write(ofp, buf, n) != n) error(\"cp: write error on file2\"); } int main(int argc, char *argv[]) { int fd; char *prog = argv[0]; /* program name for errors */ if (argc == 1) /* no args; copy standard input */ filecopy(STDIN_FILENO, STDOUT_FILENO); else while (--argc \u003e 0) if ((fd = open(*++argv, O_RDONLY, 0)) == -1) { fprintf(stderr, \"%s: can't open %s\\n\", prog, *argv); exit(1); } else { filecopy(fd, STDOUT_FILENO); close(fd); } if (ferror(stdout)) { fprintf(stderr, \"%s: error writing stdout\\n\", prog); exit(2); } exit(0); } 运行：\n1 2 3 4 ➜ ch08 git:(main) ✗ ./Exercise8-1 test01.txt test02.txt This is test01.txt Good idea.This is test02.txt Bad idea. exercise8-2 用字段代替显式的按位操作，重写 fopen 和_fillbuf 函数。比较相应代码的长度和执行速度。\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 struct flags { unsigned int _READ : 1; /* file open for reading */ unsigned int _WRITE : 1; /* file open for writing */ unsigned int _UNBUF : 1; /* file is unbuffered */ unsigned int _EOF : 1; /* EOF has occurred on this file */ unsigned int _ERR : 1; /* error occurred on this file */ }; FILE *fopen(char *name, char *mode) { int fd; FILE *fp; if (*mode != 'r' \u0026\u0026 *mode != 'w' \u0026\u0026 *mode != 'a') return NULL; for (fp = _iob; fp \u003c _iob + OPEN_MAX; fp++) if ((flagsempty(fp-\u003eflag) \u0026 (_READ | _WRITE)) == 0) break; /* found free slot */ if (fp \u003e= _iob + OPEN_MAX) /* no free slots */ return NULL; if (*mode == 'w') fd = creat(name, PERMS); else if (*mode == 'a') { if ((fd = open(name, O_WRONLY, 0)) == -1) fd = creat(name, PERMS); lseek(fd, 0L, 2); } else fd = open(name, O_RDONLY, 0); if (fd == -1) /* couldn't access name */ return NULL; fp-\u003efd = fd; fp-\u003ecnt = 0; fp-\u003ebase = NULL; fp-\u003eflag._READ = (*mode == 'r') ? 1 : 0; fp-\u003eflag._WRITE = (*mode == 'w') ? 1 : 0; return fp; } /* _fillbuf: allocate and fill input buffer */ int _fillbuf(FILE *fp) { int bufsize; if ((flagsempty(fp-\u003eflag) \u0026 (_READ | _EOF | _ERR)) != _READ) return EOF; bufsize = (flagsempty(fp-\u003eflag) \u0026 _UNBUF) ? 1 : BUFSIZ; if (fp-\u003ebase == NULL) /* no buffer yet */ if ((fp-\u003ebase = (char *)malloc(bufsize)) == NULL) return EOF; /* can't get buffer */ fp-\u003eptr = fp-\u003ebase; fp-\u003ecnt = read(fp-\u003efd, fp-\u003eptr, bufsize); if (--fp-\u003ecnt \u003c 0) { if (fp-\u003ecnt == -1) fp-\u003eflag._EOF = 1; else fp-\u003eflag._ERR = 1; fp-\u003ecnt = 0; return EOF; } return (unsigned char)*fp-\u003eptr++; } exercise8-3 设计并编写函数_flushbuf、fflush 和 fclose。\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105 106 107 int _flushbuf(int c, FILE *fp) { int num_written, bufsize; unsigned char uc = c; if ((fp-\u003eflag \u0026 (_WRITE | _EOF_ERR)) != _WRITE) return EOF; /* 如果尚未分配缓冲区并且不是无缓冲模式，尝试分配一个大小为 BUFSIZ 的缓冲区。 如果分配失败，设置为无缓冲模式；如果成功，初始化缓冲区指针和计数器。 */ if (fp-\u003ebase == NULL \u0026\u0026 ((fp-\u003eflag \u0026 _UNBUF) == 0)) { if ((fp-\u003ebase = malloc(BUFSIZ)) == NULL) fp-\u003eflag |= _UNBUF; else { fp-\u003eptr = fp-\u003ebase; fp-\u003ecnt = BUFSIZ - 1; } } /* 如果是无缓冲模式，直接将字符写入文件。 此时将指针和计数器设置为 NULL 和 0。若要写入的是 EOF，则直接返回。 */ if (fp-\u003eflag \u0026 _UNBUF) { /* unbuffered write */ fp-\u003eptr = fp-\u003ebase = NULL; fp-\u003ecnt = 0; if (c = EOF) return EOF; num_written = write(fp-\u003efd, \u0026uc, 1); bufsize = 1; } /* 如果是缓冲模式且要写入的字符不是 EOF，将字符存入缓冲区，然后更新指针。 接着计算当前缓冲区的大小，并将缓冲区内容写入文件。写入后，将指针和计数器重置。 因为没有写入EOF，所以不会打印 */ else { /* buffered write */ if (c != EOF) { *fp-\u003eptr = uc; fp-\u003eptr++; } bufsize = (int)(fp-\u003eptr - fp-\u003ebase); num_written = write(fp-\u003efd, fp-\u003ebase, bufsize); fp-\u003eptr = fp-\u003ebase; fp-\u003ecnt = bufsize - 1; } if (num_written = bufsize) return c; else { fp-\u003eflag |= _ERR; return EOF; } } /* 刷新输出缓冲区 */ int fflush(FILE *f) { int retval; // 返回值 int i; retval = 0; if ((f-\u003eflag \u0026 _WRITE) == 0) return -1; // 将EOF写入f中，代表文件结束 _flushbuf(EOF, f); if (f-\u003eflag \u0026 _ERR) retval = -1; return retval; } /* 关闭文件 */ int fclose(FILE *f) { int fd; if (f == NULL) return -1; fd = f-\u003efd; // 将文件输出缓冲区刷新 fflush(f); // 将cnt、ptr、base、flag、fd重置，释放base指向的内存 f-\u003ecnt = 0; f-\u003eptr = NULL; if (f-\u003ebase != NULL) free(f-\u003ebase); f-\u003ebase = NULL; f-\u003eflag = 0; f-\u003efd = -1; // 关闭文件描述符 return close(fd); } int main(int argc, char *argv[]) { FILE *fp; fp = fopen(\"test01.txt\", \"r\"); char c; while ((c = getc(fp)) != EOF) putc(c, stdout); fflush(stdout); fclose(fp); } 运行：\n1 2 3 ➜ ch08 git:(main) ✗ ./Exercise8-3 test01.txt This is test01.txt Good idea. exercise8-4 标准库函数int fseek(FILE *fp, long offset, int origin)类似于函数 lseek，所不同的是，该函数中的 fp 是一个文件指针而不是文件描述符，且返回值是一个 int 类型的状态而非位置值。编写函数 fseek，并确保该函数与库中其它函数使用的缓冲能够协同工作。\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 /* 将读写指针置于一定位置 */ int fseek(FILE *fp, long offset, int origin) { if ((fp-\u003eflag \u0026 _UNBUF) == 0 \u0026\u0026 fp-\u003ebase != NULL) { // 如果是写入模式，刷新缓冲区，将缓冲区内容输出，防止写入一个不为空的缓冲区 if (fp-\u003eflag \u0026 _WRITE) fflush(fp); // 如果是读取模式，将缓冲区内容清空，防止读取一个不为空的缓冲区 else if (fp-\u003eflag \u0026 _READ) { fp-\u003ecnt = 0; fp-\u003eptr = fp-\u003ebase; } } return (lseek(fp-\u003efd, offset, origin) \u003c 0); } int main(int argc, char *argv[]) { FILE *fp; if (argc == 1) return 1; fp = fopen(argv[1], \"r\"); off_t offset = 0; if (argc == 3) offset = atol(argv[2]); char c; fseek(fp, offset, SEEK_SET); while ((c = getc(fp)) != EOF) putc(c, stdout); fflush(stdout); fclose(fp); } 运行：\n1 2 3 ➜ ch08 git:(main) ✗ ./Exercise8-4 test01.txt 12 01.txt Good idea. exercise8-5 修改 fsize 程序，打印 i 结点项中包含的其它信息。\n书中提供的代码有一些问题：\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 /* readdir: read directory entries in sequence */ Dirent *mreaddir(mDIR *dp) { struct direct dirbuf; /* local directory structure */ static Dirent d; /* return: portable structure */ int readsize; // 此版本的read无法读取一个目录文件，下面的语句执行之后 readsize 始终为-1 // 在其他测试程序中单独测试了使用 read() 来读取一个目录文件，也是得到相同的结论 // 所以就在本步骤，只好使用系统提供的 readdir() 来读取一个目录文件的信息 while ((readsize = read(dp-\u003efd, (char *)\u0026dirbuf, sizeof(dirbuf))) == sizeof(dirbuf)) { if (dirbuf.d_ino == 0) /* slot not in use */ continue; d.ino = dirbuf.d_ino; strncpy(d.name, dirbuf.d_name, DIRSIZ); d.name[DIRSIZ] = '\\0'; /* ensure termination */ return \u0026d; } return NULL; } 经过修改，下面的代码可以实现递归打印目录中的文件及子目录内容：\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 #include \"./dirent.h\" #define MAX_PATH 1024 Dirent *mreaddir02(DIR *dp) { struct direct *dirbuf; static Dirent d; // 静态变量 if ((dirbuf = readdir(dp)) == NULL || dirbuf-\u003ed_ino == 0) return NULL; d.ino = dirbuf-\u003ed_ino; strncpy(d.name, dirbuf-\u003ed_name, DIRSIZ); d.name[DIRSIZ] = '\\0'; return \u0026d; } /* dirwalk: apply fcn to all files in dir */ void dirwalk(char *dir, void (*fcn)(char *)) { char name[MAX_PATH]; Dirent *dp = malloc(sizeof(Dirent)); memset(dp-\u003ename, 0, sizeof(dp-\u003ename)); DIR *dfd; // 直接使用系统的opendir() if ((dfd = opendir(dir)) == NULL) { fprintf(stderr, \"dirwalk: can't open %s\\n\", dir); return; } while ((dp = mreaddir02(dfd)) != NULL) { if (strcmp(dp-\u003ename, \".\") == 0 || strcmp(dp-\u003ename, \"..\") == 0) continue; /* skip self and parent */ if (strlen(dir) + strlen(dp-\u003ename) + 2 \u003e sizeof(name)) fprintf(stderr, \"dirwalk: name %s %s too long\\n\", dir, dp-\u003ename); else { sprintf(name, \"%s/%s\", dir, dp-\u003ename); (*fcn)(name); } } // 直接使用系统提供的closedir() closedir(dfd); } void fsize(char *name) { struct stat stbuf; if (stat(name, \u0026stbuf) == -1) { fprintf(stderr, \"fsize: can't access %s\\n\", name); return; } if (S_ISDIR(stbuf.st_mode)) /* directory */ dirwalk(name, fsize); char timebuf[32]; strftime(timebuf, sizeof(timebuf), \"%b %d %R\", localtime(\u0026stbuf.st_mtime)); // 展示文件大小，文件的inode号，文件的最后修改时间，文件名 printf(\"%8ldB %8ld %s %s\\n\", stbuf.st_size, stbuf.st_ino, timebuf, name); } 运行，打印文件的大小、inode节点号、最后修改日期、文件名\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 ➜ ch08 git:(main) ✗ ./Exercise8-5 /home/jagger/Codes/ch08 1300B 149492 Oct 19 10:11 /home/jagger/Codes/ch08/Exercise8-1.c 6917B 149495 Oct 23 12:59 /home/jagger/Codes/ch08/Exercise8-4.c 28B 149503 Oct 19 10:13 /home/jagger/Codes/ch08/test02.txt 40B 149491 Oct 19 09:49 /home/jagger/Codes/ch08/.gitignore 1461B 149502 Oct 19 11:29 /home/jagger/Codes/ch08/Exercise8-8.c 13464B 149490 Oct 23 15:12 /home/jagger/Codes/ch08/README.md 3134B 149498 Oct 20 14:04 /home/jagger/Codes/ch08/Exercise8-6.c 662B 149504 Oct 20 13:12 /home/jagger/Codes/ch08/dirent.h 399B 149505 Oct 23 13:32 /home/jagger/Codes/ch08/test.c 3362B 149497 Oct 23 15:00 /home/jagger/Codes/ch08/Exercise8-5.c 30B 149496 Oct 23 11:34 /home/jagger/Codes/ch08/test01.txt 819B 149499 Oct 20 13:43 /home/jagger/Codes/ch08/Exercise8-7.c 6202B 149494 Oct 23 11:47 /home/jagger/Codes/ch08/Exercise8-3.c 75B 149501 Oct 19 09:50 /home/jagger/Codes/ch08/createfile.sh 23016B 149506 Oct 23 15:13 /home/jagger/Codes/ch08/Exercise8-5 209B 149500 Oct 19 09:51 /home/jagger/Codes/ch08/Makefile 3511B 149493 Oct 19 11:22 /home/jagger/Codes/ch08/Exercise8-2.c 4096B 149489 Oct 23 15:13 /home/jagger/Codes/ch08 exercise8-6 标准库函数 calloc(n, size)返回一个指针，它指向 n 个长度为 size的对象，且所有分配的存储空间都被初始化为0。通过调用或修改 malloc函数来实现 calloc函数。\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 void *mcalloc(size_t n, size_t size) { void *p; p = malloc(n * size); if (p != NULL) bzero(p, n * size); return p; } int main(void) { int size; int *p = NULL; printf(\"Enter the size of memory to allocate: \"); scanf(\"%d\", \u0026size); p = (int *)mcalloc(size, sizeof(*p)); if (p != NULL) { printf(\"Memory allocated successfully\\n\"); for (int i = 0; i \u003c size; i++) { printf(\"%08X \", p[i]); if (i % 8 == 7) printf(\"\\n\"); } } return 0; } 运行：\n1 2 3 4 Enter the size of memory to allocate: 12 Memory allocated successfully 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 exercise8-7 malloc 接收对存储空间的请求时，并不检查请求长度的合理性；而 free则认为被释放的块包含一个有效的长度字段。改进这些函数，使它们具有错误检查的功能。\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 void *mmalloc(int size) { if (size \u003c= 0 || size \u003e MAXSIZE) { fprintf(stderr, \"Invalid allocation size: %d Bytes\\n\", size); return NULL; } else { void *ptr = malloc(size); if (ptr == NULL) fprintf(stderr, \"Memory allocation failed\\n\"); printf(\"Memory allocated successfully\\n\"); return ptr; } } void mfree(void *ptr) { if (ptr == NULL) { fprintf(stderr, \"Attempt to free a null pointer\\n\"); return; } printf(\"Memory freed successfully\\n\"); free(ptr); } int main() { int size; printf(\"Enter the size of memory to allocate: \"); scanf(\"%d\", \u0026size); void *ptr = mmalloc(size); if (ptr != NULL) mfree(ptr); return 0; } 运行：\n1 2 Enter the size of memory to allocate: -1 Invalid allocation size: -1 Bytes ","wordCount":"1869","inLanguage":"en","image":"https://fireflyyh.top/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E","datePublished":"2024-10-23T00:00:00Z","dateModified":"2024-10-23T00:00:00Z","author":{"@type":"Person","name":"Jagger"},"mainEntityOfPage":{"@type":"WebPage","@id":"https://fireflyyh.top/posts/tcpl/ch08/"},"publisher":{"@type":"Organization","name":"Jagger's Blog","logo":{"@type":"ImageObject","url":"https://fireflyyh.top/img/yuan.jpg"}}}</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-Y30PKHXBN4"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-Y30PKHXBN4")</script></head><body id=top><script>localStorage.getItem("pref-theme")==="dark"?document.body.classList.add("dark"):localStorage.getItem("pref-theme")==="light"?document.body.classList.remove("dark"):window.matchMedia("(prefers-color-scheme: dark)").matches&&document.body.classList.add("dark")</script><header class=header><nav class=nav><div class=logo><a href=https://fireflyyh.top/ accesskey=h title="Jagger's Blog (Alt + H)"><img src=https://fireflyyh.top/img/laugh.jpg alt aria-label=logo height=35>Jagger's Blog</a><div class=logo-switches><button id=theme-toggle accesskey=t title="(Alt + T)"><svg id="moon" width="24" height="18" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg><svg id="sun" width="24" height="18" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></button></div></div><ul id=menu><li><a href=https://fireflyyh.top/archives/ title=Archives><span>Archives</span></a></li><li><a href=https://fireflyyh.top/categories/ title=Categories><span>Categories</span></a></li><li><a href=https://fireflyyh.top/tags/ title=Tags><span>Tags</span></a></li><li><a href=https://fireflyyh.top/search/ title="Search (Alt + /)" accesskey=/><span>Search</span></a></li><li><a href=https://fireflyyh.top/about/ title=About><span>About</span></a></li><li><a href=https://github.com/starsYHyh/Jagger/ title=Github><span>Github</span>&nbsp;<svg fill="none" shape-rendering="geometricPrecision" stroke="currentcolor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewBox="0 0 24 24" height="12" width="12"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg></a></li></ul></nav></header><main class=main><article class=post-single><header class=post-header><div class=breadcrumbs><a href=https://fireflyyh.top/>Home</a>&nbsp;»&nbsp;<a href=https://fireflyyh.top/posts/>Posts</a></div><h1 class="post-title entry-hint-parent">C语言程序设计第二版课后习题--第八章
+<span class=entry-hint title=Draft><svg height="35" viewBox="0 -960 960 960" fill="currentcolor"><path d="M160-410v-60h3e2v60H160zm0-165v-60h470v60H160zm0-165v-60h470v60H160zm360 580v-123l221-220q9-9 20-13t22-4q12 0 23 4.5t20 13.5l37 37q9 9 13 20t4 22-4.5 22.5T862.09-380L643-160H520zm3e2-263-37-37 37 37zM580-220h38l121-122-18-19-19-18-122 121v38zm141-141-19-18 37 37-18-19z"/></svg></span></h1><div class=post-meta><span title='2024-10-23 00:00:00 +0000 UTC'>October 23, 2024</span>&nbsp;·&nbsp;9 min&nbsp;·&nbsp;1869 words&nbsp;·&nbsp;Jagger&nbsp;|&nbsp;<a href=https://github.com/starsYHyh/Jagger/tree/main/content/posts/TCPL/ch08.md rel="noopener noreferrer" target=_blank>Suggest Changes</a></div></header><aside id=toc-container class="toc-container wide"><div class=toc><details open><summary accesskey=c title="(Alt + C)"><span class=details>Table of Contents</span></summary><div class=inner><ul><li><a href=#exercise8-1 aria-label=exercise8-1>exercise8-1</a></li><li><a href=#exercise8-2 aria-label=exercise8-2>exercise8-2</a></li><li><a href=#exercise8-3 aria-label=exercise8-3>exercise8-3</a></li><li><a href=#exercise8-4 aria-label=exercise8-4>exercise8-4</a></li><li><a href=#exercise8-5 aria-label=exercise8-5>exercise8-5</a></li><li><a href=#exercise8-6 aria-label=exercise8-6>exercise8-6</a></li><li><a href=#exercise8-7 aria-label=exercise8-7>exercise8-7</a></li></ul></div></details></div></aside><script>let activeElement,elements;window.addEventListener("DOMContentLoaded",function(){checkTocPosition(),elements=document.querySelectorAll("h1[id],h2[id],h3[id],h4[id],h5[id],h6[id]"),activeElement=elements[0];const t=encodeURI(activeElement.getAttribute("id")).toLowerCase();document.querySelector(`.inner ul li a[href="#${t}"]`).classList.add("active")},!1),window.addEventListener("resize",function(){checkTocPosition()},!1),window.addEventListener("scroll",()=>{elements&&(activeElement=Array.from(elements).find(e=>{if(getOffsetTop(e)-window.pageYOffset>0&&getOffsetTop(e)-window.pageYOffset<window.innerHeight/2)return e})||activeElement,elements.forEach(e=>{const t=encodeURI(e.getAttribute("id")).toLowerCase();e===activeElement?document.querySelector(`.inner ul li a[href="#${t}"]`).classList.add("active"):document.querySelector(`.inner ul li a[href="#${t}"]`).classList.remove("active")}))},!1);const main=parseInt(getComputedStyle(document.body).getPropertyValue("--article-width"),10),toc=parseInt(getComputedStyle(document.body).getPropertyValue("--toc-width"),10),gap=parseInt(getComputedStyle(document.body).getPropertyValue("--gap"),10);function checkTocPosition(){const e=document.body.scrollWidth;e-main-toc*2-gap*4>0?document.getElementById("toc-container").classList.add("wide"):document.getElementById("toc-container").classList.remove("wide")}function getOffsetTop(e){if(!e.getClientRects().length)return 0;let t=e.getBoundingClientRect(),n=e.ownerDocument.defaultView;return t.top+n.pageYOffset}</script><div class=post-content><blockquote><p>部分答案参考了官方题解和网上的答案，仅供参考，可能也有部分bug未发现或解决。</p></blockquote><h2 id=exercise8-1>exercise8-1<a hidden class=anchor aria-hidden=true href=#exercise8-1>#</a></h2><blockquote><p>用 read、write、open 和 close 系统调用代替标准库中功能等价的函数，重写第 7 章的 cat 程序，并通过实验比较两个版本的相对执行速度。</p></blockquote><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-c data-lang=c><span class=line><span class=cl><span class=kt>void</span> <span class=nf>filecopy</span><span class=p>(</span><span class=kt>int</span> <span class=n>ifp</span><span class=p>,</span> <span class=kt>int</span> <span class=n>ofp</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=kt>char</span> <span class=n>buf</span><span class=p>[</span><span class=n>BUFSIZE</span><span class=p>];</span>
+</span></span><span class=line><span class=cl>    <span class=kt>int</span> <span class=n>n</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=k>while</span> <span class=p>((</span><span class=n>n</span> <span class=o>=</span> <span class=nf>read</span><span class=p>(</span><span class=n>ifp</span><span class=p>,</span> <span class=n>buf</span><span class=p>,</span> <span class=n>BUFSIZE</span><span class=p>))</span> <span class=o>&gt;</span> <span class=mi>0</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=nf>write</span><span class=p>(</span><span class=n>ofp</span><span class=p>,</span> <span class=n>buf</span><span class=p>,</span> <span class=n>n</span><span class=p>)</span> <span class=o>!=</span> <span class=n>n</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=nf>error</span><span class=p>(</span><span class=s>&#34;cp: write error on file2&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kt>int</span> <span class=nf>main</span><span class=p>(</span><span class=kt>int</span> <span class=n>argc</span><span class=p>,</span> <span class=kt>char</span> <span class=o>*</span><span class=n>argv</span><span class=p>[])</span>
+</span></span><span class=line><span class=cl><span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=kt>int</span> <span class=n>fd</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=kt>char</span> <span class=o>*</span><span class=n>prog</span> <span class=o>=</span> <span class=n>argv</span><span class=p>[</span><span class=mi>0</span><span class=p>];</span> <span class=cm>/* program name for errors */</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>(</span><span class=n>argc</span> <span class=o>==</span> <span class=mi>1</span><span class=p>)</span>        <span class=cm>/* no args; copy standard input */</span>
+</span></span><span class=line><span class=cl>        <span class=nf>filecopy</span><span class=p>(</span><span class=n>STDIN_FILENO</span><span class=p>,</span> <span class=n>STDOUT_FILENO</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=k>else</span>
+</span></span><span class=line><span class=cl>        <span class=k>while</span> <span class=p>(</span><span class=o>--</span><span class=n>argc</span> <span class=o>&gt;</span> <span class=mi>0</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=k>if</span> <span class=p>((</span><span class=n>fd</span> <span class=o>=</span> <span class=nf>open</span><span class=p>(</span><span class=o>*++</span><span class=n>argv</span><span class=p>,</span> <span class=n>O_RDONLY</span><span class=p>,</span> <span class=mi>0</span><span class=p>))</span> <span class=o>==</span> <span class=o>-</span><span class=mi>1</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=p>{</span>
+</span></span><span class=line><span class=cl>                <span class=nf>fprintf</span><span class=p>(</span><span class=n>stderr</span><span class=p>,</span> <span class=s>&#34;%s: can&#39;t open %s</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>                        <span class=n>prog</span><span class=p>,</span> <span class=o>*</span><span class=n>argv</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>                <span class=nf>exit</span><span class=p>(</span><span class=mi>1</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>            <span class=p>}</span>
+</span></span><span class=line><span class=cl>            <span class=k>else</span>
+</span></span><span class=line><span class=cl>            <span class=p>{</span>
+</span></span><span class=line><span class=cl>                <span class=nf>filecopy</span><span class=p>(</span><span class=n>fd</span><span class=p>,</span> <span class=n>STDOUT_FILENO</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>                <span class=nf>close</span><span class=p>(</span><span class=n>fd</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>            <span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>(</span><span class=nf>ferror</span><span class=p>(</span><span class=n>stdout</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>    <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=nf>fprintf</span><span class=p>(</span><span class=n>stderr</span><span class=p>,</span> <span class=s>&#34;%s: error writing stdout</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>prog</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>        <span class=nf>exit</span><span class=p>(</span><span class=mi>2</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl>    <span class=nf>exit</span><span class=p>(</span><span class=mi>0</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>运行：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>➜  ch08 git:<span class=o>(</span>main<span class=o>)</span> ✗ ./Exercise8-1 test01.txt test02.txt
+</span></span><span class=line><span class=cl>This is test01.txt
+</span></span><span class=line><span class=cl>Good idea.This is test02.txt
+</span></span><span class=line><span class=cl>Bad idea.
+</span></span></code></pre></td></tr></table></div></div><h2 id=exercise8-2>exercise8-2<a hidden class=anchor aria-hidden=true href=#exercise8-2>#</a></h2><blockquote><p>用字段代替显式的按位操作，重写 fopen 和_fillbuf 函数。比较相应代码的长度和执行速度。</p></blockquote><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span><span class=lnt>49
+</span><span class=lnt>50
+</span><span class=lnt>51
+</span><span class=lnt>52
+</span><span class=lnt>53
+</span><span class=lnt>54
+</span><span class=lnt>55
+</span><span class=lnt>56
+</span><span class=lnt>57
+</span><span class=lnt>58
+</span><span class=lnt>59
+</span><span class=lnt>60
+</span><span class=lnt>61
+</span><span class=lnt>62
+</span><span class=lnt>63
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-c data-lang=c><span class=line><span class=cl><span class=k>struct</span> <span class=n>flags</span>
+</span></span><span class=line><span class=cl><span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=kt>unsigned</span> <span class=kt>int</span> <span class=nl>_READ</span> <span class=p>:</span> <span class=mi>1</span><span class=p>;</span>  <span class=cm>/* file open for reading */</span>
+</span></span><span class=line><span class=cl>    <span class=kt>unsigned</span> <span class=kt>int</span> <span class=nl>_WRITE</span> <span class=p>:</span> <span class=mi>1</span><span class=p>;</span> <span class=cm>/* file open for writing */</span>
+</span></span><span class=line><span class=cl>    <span class=kt>unsigned</span> <span class=kt>int</span> <span class=nl>_UNBUF</span> <span class=p>:</span> <span class=mi>1</span><span class=p>;</span> <span class=cm>/* file is unbuffered */</span>
+</span></span><span class=line><span class=cl>    <span class=kt>unsigned</span> <span class=kt>int</span> <span class=nl>_EOF</span> <span class=p>:</span> <span class=mi>1</span><span class=p>;</span>   <span class=cm>/* EOF has occurred on this file */</span>
+</span></span><span class=line><span class=cl>    <span class=kt>unsigned</span> <span class=kt>int</span> <span class=nl>_ERR</span> <span class=p>:</span> <span class=mi>1</span><span class=p>;</span>   <span class=cm>/* error occurred on this file */</span>
+</span></span><span class=line><span class=cl><span class=p>};</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>FILE</span> <span class=o>*</span><span class=nf>fopen</span><span class=p>(</span><span class=kt>char</span> <span class=o>*</span><span class=n>name</span><span class=p>,</span> <span class=kt>char</span> <span class=o>*</span><span class=n>mode</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=kt>int</span> <span class=n>fd</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=n>FILE</span> <span class=o>*</span><span class=n>fp</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>(</span><span class=o>*</span><span class=n>mode</span> <span class=o>!=</span> <span class=sc>&#39;r&#39;</span> <span class=o>&amp;&amp;</span> <span class=o>*</span><span class=n>mode</span> <span class=o>!=</span> <span class=sc>&#39;w&#39;</span> <span class=o>&amp;&amp;</span> <span class=o>*</span><span class=n>mode</span> <span class=o>!=</span> <span class=sc>&#39;a&#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=k>for</span> <span class=p>(</span><span class=n>fp</span> <span class=o>=</span> <span class=n>_iob</span><span class=p>;</span> <span class=n>fp</span> <span class=o>&lt;</span> <span class=n>_iob</span> <span class=o>+</span> <span class=n>OPEN_MAX</span><span class=p>;</span> <span class=n>fp</span><span class=o>++</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=p>((</span><span class=nf>flagsempty</span><span class=p>(</span><span class=n>fp</span><span class=o>-&gt;</span><span class=n>flag</span><span class=p>)</span> <span class=o>&amp;</span> <span class=p>(</span><span class=n>_READ</span> <span class=o>|</span> <span class=n>_WRITE</span><span class=p>))</span> <span class=o>==</span> <span class=mi>0</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=k>break</span><span class=p>;</span>             <span class=cm>/* found free slot */</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>(</span><span class=n>fp</span> <span class=o>&gt;=</span> <span class=n>_iob</span> <span class=o>+</span> <span class=n>OPEN_MAX</span><span class=p>)</span> <span class=cm>/* no free slots */</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>(</span><span class=o>*</span><span class=n>mode</span> <span class=o>==</span> <span class=sc>&#39;w&#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=n>fd</span> <span class=o>=</span> <span class=nf>creat</span><span class=p>(</span><span class=n>name</span><span class=p>,</span> <span class=n>PERMS</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=k>else</span> <span class=k>if</span> <span class=p>(</span><span class=o>*</span><span class=n>mode</span> <span class=o>==</span> <span class=sc>&#39;a&#39;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=p>((</span><span class=n>fd</span> <span class=o>=</span> <span class=nf>open</span><span class=p>(</span><span class=n>name</span><span class=p>,</span> <span class=n>O_WRONLY</span><span class=p>,</span> <span class=mi>0</span><span class=p>))</span> <span class=o>==</span> <span class=o>-</span><span class=mi>1</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=n>fd</span> <span class=o>=</span> <span class=nf>creat</span><span class=p>(</span><span class=n>name</span><span class=p>,</span> <span class=n>PERMS</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>        <span class=nf>lseek</span><span class=p>(</span><span class=n>fd</span><span class=p>,</span> <span class=mi>0L</span><span class=p>,</span> <span class=mi>2</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl>    <span class=k>else</span>
+</span></span><span class=line><span class=cl>        <span class=n>fd</span> <span class=o>=</span> <span class=nf>open</span><span class=p>(</span><span class=n>name</span><span class=p>,</span> <span class=n>O_RDONLY</span><span class=p>,</span> <span class=mi>0</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>(</span><span class=n>fd</span> <span class=o>==</span> <span class=o>-</span><span class=mi>1</span><span class=p>)</span> <span class=cm>/* couldn&#39;t access name */</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=n>fp</span><span class=o>-&gt;</span><span class=n>fd</span> <span class=o>=</span> <span class=n>fd</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=n>fp</span><span class=o>-&gt;</span><span class=n>cnt</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=n>fp</span><span class=o>-&gt;</span><span class=n>base</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=n>fp</span><span class=o>-&gt;</span><span class=n>flag</span><span class=p>.</span><span class=n>_READ</span> <span class=o>=</span> <span class=p>(</span><span class=o>*</span><span class=n>mode</span> <span class=o>==</span> <span class=sc>&#39;r&#39;</span><span class=p>)</span> <span class=o>?</span> <span class=mi>1</span> <span class=o>:</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=n>fp</span><span class=o>-&gt;</span><span class=n>flag</span><span class=p>.</span><span class=n>_WRITE</span> <span class=o>=</span> <span class=p>(</span><span class=o>*</span><span class=n>mode</span> <span class=o>==</span> <span class=sc>&#39;w&#39;</span><span class=p>)</span> <span class=o>?</span> <span class=mi>1</span> <span class=o>:</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>fp</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=cm>/* _fillbuf: allocate and fill input buffer */</span>
+</span></span><span class=line><span class=cl><span class=kt>int</span> <span class=nf>_fillbuf</span><span class=p>(</span><span class=n>FILE</span> <span class=o>*</span><span class=n>fp</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=kt>int</span> <span class=n>bufsize</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>((</span><span class=nf>flagsempty</span><span class=p>(</span><span class=n>fp</span><span class=o>-&gt;</span><span class=n>flag</span><span class=p>)</span> <span class=o>&amp;</span> <span class=p>(</span><span class=n>_READ</span> <span class=o>|</span> <span class=n>_EOF</span> <span class=o>|</span> <span class=n>_ERR</span><span class=p>))</span> <span class=o>!=</span> <span class=n>_READ</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>EOF</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=n>bufsize</span> <span class=o>=</span> <span class=p>(</span><span class=nf>flagsempty</span><span class=p>(</span><span class=n>fp</span><span class=o>-&gt;</span><span class=n>flag</span><span class=p>)</span> <span class=o>&amp;</span> <span class=n>_UNBUF</span><span class=p>)</span> <span class=o>?</span> <span class=mi>1</span> <span class=o>:</span> <span class=n>BUFSIZ</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>(</span><span class=n>fp</span><span class=o>-&gt;</span><span class=n>base</span> <span class=o>==</span> <span class=nb>NULL</span><span class=p>)</span> <span class=cm>/* no buffer yet */</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=p>((</span><span class=n>fp</span><span class=o>-&gt;</span><span class=n>base</span> <span class=o>=</span> <span class=p>(</span><span class=kt>char</span> <span class=o>*</span><span class=p>)</span><span class=nf>malloc</span><span class=p>(</span><span class=n>bufsize</span><span class=p>))</span> <span class=o>==</span> <span class=nb>NULL</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=k>return</span> <span class=n>EOF</span><span class=p>;</span> <span class=cm>/* can&#39;t get buffer */</span>
+</span></span><span class=line><span class=cl>    <span class=n>fp</span><span class=o>-&gt;</span><span class=n>ptr</span> <span class=o>=</span> <span class=n>fp</span><span class=o>-&gt;</span><span class=n>base</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=n>fp</span><span class=o>-&gt;</span><span class=n>cnt</span> <span class=o>=</span> <span class=nf>read</span><span class=p>(</span><span class=n>fp</span><span class=o>-&gt;</span><span class=n>fd</span><span class=p>,</span> <span class=n>fp</span><span class=o>-&gt;</span><span class=n>ptr</span><span class=p>,</span> <span class=n>bufsize</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>(</span><span class=o>--</span><span class=n>fp</span><span class=o>-&gt;</span><span class=n>cnt</span> <span class=o>&lt;</span> <span class=mi>0</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=n>fp</span><span class=o>-&gt;</span><span class=n>cnt</span> <span class=o>==</span> <span class=o>-</span><span class=mi>1</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=n>fp</span><span class=o>-&gt;</span><span class=n>flag</span><span class=p>.</span><span class=n>_EOF</span> <span class=o>=</span> <span class=mi>1</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>        <span class=k>else</span>
+</span></span><span class=line><span class=cl>            <span class=n>fp</span><span class=o>-&gt;</span><span class=n>flag</span><span class=p>.</span><span class=n>_ERR</span> <span class=o>=</span> <span class=mi>1</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>        <span class=n>fp</span><span class=o>-&gt;</span><span class=n>cnt</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>EOF</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=p>(</span><span class=kt>unsigned</span> <span class=kt>char</span><span class=p>)</span><span class=o>*</span><span class=n>fp</span><span class=o>-&gt;</span><span class=n>ptr</span><span class=o>++</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=exercise8-3>exercise8-3<a hidden class=anchor aria-hidden=true href=#exercise8-3>#</a></h2><blockquote><p>设计并编写函数_flushbuf、fflush 和 fclose。</p></blockquote><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>  1
+</span><span class=lnt>  2
+</span><span class=lnt>  3
+</span><span class=lnt>  4
+</span><span class=lnt>  5
+</span><span class=lnt>  6
+</span><span class=lnt>  7
+</span><span class=lnt>  8
+</span><span class=lnt>  9
+</span><span class=lnt> 10
+</span><span class=lnt> 11
+</span><span class=lnt> 12
+</span><span class=lnt> 13
+</span><span class=lnt> 14
+</span><span class=lnt> 15
+</span><span class=lnt> 16
+</span><span class=lnt> 17
+</span><span class=lnt> 18
+</span><span class=lnt> 19
+</span><span class=lnt> 20
+</span><span class=lnt> 21
+</span><span class=lnt> 22
+</span><span class=lnt> 23
+</span><span class=lnt> 24
+</span><span class=lnt> 25
+</span><span class=lnt> 26
+</span><span class=lnt> 27
+</span><span class=lnt> 28
+</span><span class=lnt> 29
+</span><span class=lnt> 30
+</span><span class=lnt> 31
+</span><span class=lnt> 32
+</span><span class=lnt> 33
+</span><span class=lnt> 34
+</span><span class=lnt> 35
+</span><span class=lnt> 36
+</span><span class=lnt> 37
+</span><span class=lnt> 38
+</span><span class=lnt> 39
+</span><span class=lnt> 40
+</span><span class=lnt> 41
+</span><span class=lnt> 42
+</span><span class=lnt> 43
+</span><span class=lnt> 44
+</span><span class=lnt> 45
+</span><span class=lnt> 46
+</span><span class=lnt> 47
+</span><span class=lnt> 48
+</span><span class=lnt> 49
+</span><span class=lnt> 50
+</span><span class=lnt> 51
+</span><span class=lnt> 52
+</span><span class=lnt> 53
+</span><span class=lnt> 54
+</span><span class=lnt> 55
+</span><span class=lnt> 56
+</span><span class=lnt> 57
+</span><span class=lnt> 58
+</span><span class=lnt> 59
+</span><span class=lnt> 60
+</span><span class=lnt> 61
+</span><span class=lnt> 62
+</span><span class=lnt> 63
+</span><span class=lnt> 64
+</span><span class=lnt> 65
+</span><span class=lnt> 66
+</span><span class=lnt> 67
+</span><span class=lnt> 68
+</span><span class=lnt> 69
+</span><span class=lnt> 70
+</span><span class=lnt> 71
+</span><span class=lnt> 72
+</span><span class=lnt> 73
+</span><span class=lnt> 74
+</span><span class=lnt> 75
+</span><span class=lnt> 76
+</span><span class=lnt> 77
+</span><span class=lnt> 78
+</span><span class=lnt> 79
+</span><span class=lnt> 80
+</span><span class=lnt> 81
+</span><span class=lnt> 82
+</span><span class=lnt> 83
+</span><span class=lnt> 84
+</span><span class=lnt> 85
+</span><span class=lnt> 86
+</span><span class=lnt> 87
+</span><span class=lnt> 88
+</span><span class=lnt> 89
+</span><span class=lnt> 90
+</span><span class=lnt> 91
+</span><span class=lnt> 92
+</span><span class=lnt> 93
+</span><span class=lnt> 94
+</span><span class=lnt> 95
+</span><span class=lnt> 96
+</span><span class=lnt> 97
+</span><span class=lnt> 98
+</span><span class=lnt> 99
+</span><span class=lnt>100
+</span><span class=lnt>101
+</span><span class=lnt>102
+</span><span class=lnt>103
+</span><span class=lnt>104
+</span><span class=lnt>105
+</span><span class=lnt>106
+</span><span class=lnt>107
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-c data-lang=c><span class=line><span class=cl><span class=kt>int</span> <span class=nf>_flushbuf</span><span class=p>(</span><span class=kt>int</span> <span class=n>c</span><span class=p>,</span> <span class=n>FILE</span> <span class=o>*</span><span class=n>fp</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=kt>int</span> <span class=n>num_written</span><span class=p>,</span> <span class=n>bufsize</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=kt>unsigned</span> <span class=kt>char</span> <span class=n>uc</span> <span class=o>=</span> <span class=n>c</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>((</span><span class=n>fp</span><span class=o>-&gt;</span><span class=n>flag</span> <span class=o>&amp;</span> <span class=p>(</span><span class=n>_WRITE</span> <span class=o>|</span> <span class=n>_EOF_ERR</span><span class=p>))</span> <span class=o>!=</span> <span class=n>_WRITE</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>EOF</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=cm>/*
+</span></span></span><span class=line><span class=cl><span class=cm>        如果尚未分配缓冲区并且不是无缓冲模式，尝试分配一个大小为 BUFSIZ 的缓冲区。
+</span></span></span><span class=line><span class=cl><span class=cm>        如果分配失败，设置为无缓冲模式；如果成功，初始化缓冲区指针和计数器。
+</span></span></span><span class=line><span class=cl><span class=cm>    */</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>(</span><span class=n>fp</span><span class=o>-&gt;</span><span class=n>base</span> <span class=o>==</span> <span class=nb>NULL</span> <span class=o>&amp;&amp;</span> <span class=p>((</span><span class=n>fp</span><span class=o>-&gt;</span><span class=n>flag</span> <span class=o>&amp;</span> <span class=n>_UNBUF</span><span class=p>)</span> <span class=o>==</span> <span class=mi>0</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>    <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=p>((</span><span class=n>fp</span><span class=o>-&gt;</span><span class=n>base</span> <span class=o>=</span> <span class=nf>malloc</span><span class=p>(</span><span class=n>BUFSIZ</span><span class=p>))</span> <span class=o>==</span> <span class=nb>NULL</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=n>fp</span><span class=o>-&gt;</span><span class=n>flag</span> <span class=o>|=</span> <span class=n>_UNBUF</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>        <span class=k>else</span>
+</span></span><span class=line><span class=cl>        <span class=p>{</span>
+</span></span><span class=line><span class=cl>            <span class=n>fp</span><span class=o>-&gt;</span><span class=n>ptr</span> <span class=o>=</span> <span class=n>fp</span><span class=o>-&gt;</span><span class=n>base</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>            <span class=n>fp</span><span class=o>-&gt;</span><span class=n>cnt</span> <span class=o>=</span> <span class=n>BUFSIZ</span> <span class=o>-</span> <span class=mi>1</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl>    <span class=cm>/*
+</span></span></span><span class=line><span class=cl><span class=cm>        如果是无缓冲模式，直接将字符写入文件。
+</span></span></span><span class=line><span class=cl><span class=cm>        此时将指针和计数器设置为 NULL 和 0。若要写入的是 EOF，则直接返回。
+</span></span></span><span class=line><span class=cl><span class=cm>    */</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>(</span><span class=n>fp</span><span class=o>-&gt;</span><span class=n>flag</span> <span class=o>&amp;</span> <span class=n>_UNBUF</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=cm>/* unbuffered write */</span>
+</span></span><span class=line><span class=cl>        <span class=n>fp</span><span class=o>-&gt;</span><span class=n>ptr</span> <span class=o>=</span> <span class=n>fp</span><span class=o>-&gt;</span><span class=n>base</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>        <span class=n>fp</span><span class=o>-&gt;</span><span class=n>cnt</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=n>c</span> <span class=o>=</span> <span class=n>EOF</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=k>return</span> <span class=n>EOF</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>        <span class=n>num_written</span> <span class=o>=</span> <span class=nf>write</span><span class=p>(</span><span class=n>fp</span><span class=o>-&gt;</span><span class=n>fd</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>uc</span><span class=p>,</span> <span class=mi>1</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>        <span class=n>bufsize</span> <span class=o>=</span> <span class=mi>1</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl>    <span class=cm>/*
+</span></span></span><span class=line><span class=cl><span class=cm>        如果是缓冲模式且要写入的字符不是 EOF，将字符存入缓冲区，然后更新指针。
+</span></span></span><span class=line><span class=cl><span class=cm>        接着计算当前缓冲区的大小，并将缓冲区内容写入文件。写入后，将指针和计数器重置。
+</span></span></span><span class=line><span class=cl><span class=cm>        因为没有写入EOF，所以不会打印
+</span></span></span><span class=line><span class=cl><span class=cm>    */</span>
+</span></span><span class=line><span class=cl>    <span class=k>else</span>
+</span></span><span class=line><span class=cl>    <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=cm>/* buffered write */</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=n>c</span> <span class=o>!=</span> <span class=n>EOF</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=p>{</span>
+</span></span><span class=line><span class=cl>            <span class=o>*</span><span class=n>fp</span><span class=o>-&gt;</span><span class=n>ptr</span> <span class=o>=</span> <span class=n>uc</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>            <span class=n>fp</span><span class=o>-&gt;</span><span class=n>ptr</span><span class=o>++</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=cl>        <span class=n>bufsize</span> <span class=o>=</span> <span class=p>(</span><span class=kt>int</span><span class=p>)(</span><span class=n>fp</span><span class=o>-&gt;</span><span class=n>ptr</span> <span class=o>-</span> <span class=n>fp</span><span class=o>-&gt;</span><span class=n>base</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>        <span class=n>num_written</span> <span class=o>=</span> <span class=nf>write</span><span class=p>(</span><span class=n>fp</span><span class=o>-&gt;</span><span class=n>fd</span><span class=p>,</span> <span class=n>fp</span><span class=o>-&gt;</span><span class=n>base</span><span class=p>,</span> <span class=n>bufsize</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>        <span class=n>fp</span><span class=o>-&gt;</span><span class=n>ptr</span> <span class=o>=</span> <span class=n>fp</span><span class=o>-&gt;</span><span class=n>base</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>        <span class=n>fp</span><span class=o>-&gt;</span><span class=n>cnt</span> <span class=o>=</span> <span class=n>bufsize</span> <span class=o>-</span> <span class=mi>1</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>(</span><span class=n>num_written</span> <span class=o>=</span> <span class=n>bufsize</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>c</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=k>else</span>
+</span></span><span class=line><span class=cl>    <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=n>fp</span><span class=o>-&gt;</span><span class=n>flag</span> <span class=o>|=</span> <span class=n>_ERR</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>EOF</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=cm>/* 刷新输出缓冲区 */</span>
+</span></span><span class=line><span class=cl><span class=kt>int</span> <span class=nf>fflush</span><span class=p>(</span><span class=n>FILE</span> <span class=o>*</span><span class=n>f</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=kt>int</span> <span class=n>retval</span><span class=p>;</span> <span class=c1>// 返回值
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=kt>int</span> <span class=n>i</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=n>retval</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>((</span><span class=n>f</span><span class=o>-&gt;</span><span class=n>flag</span> <span class=o>&amp;</span> <span class=n>_WRITE</span><span class=p>)</span> <span class=o>==</span> <span class=mi>0</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=o>-</span><span class=mi>1</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 将EOF写入f中，代表文件结束
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nf>_flushbuf</span><span class=p>(</span><span class=n>EOF</span><span class=p>,</span> <span class=n>f</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>(</span><span class=n>f</span><span class=o>-&gt;</span><span class=n>flag</span> <span class=o>&amp;</span> <span class=n>_ERR</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=n>retval</span> <span class=o>=</span> <span class=o>-</span><span class=mi>1</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>retval</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=cm>/* 关闭文件 */</span>
+</span></span><span class=line><span class=cl><span class=kt>int</span> <span class=nf>fclose</span><span class=p>(</span><span class=n>FILE</span> <span class=o>*</span><span class=n>f</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=kt>int</span> <span class=n>fd</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>(</span><span class=n>f</span> <span class=o>==</span> <span class=nb>NULL</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=o>-</span><span class=mi>1</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=n>fd</span> <span class=o>=</span> <span class=n>f</span><span class=o>-&gt;</span><span class=n>fd</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 将文件输出缓冲区刷新
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nf>fflush</span><span class=p>(</span><span class=n>f</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 将cnt、ptr、base、flag、fd重置，释放base指向的内存
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=n>f</span><span class=o>-&gt;</span><span class=n>cnt</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=n>f</span><span class=o>-&gt;</span><span class=n>ptr</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>(</span><span class=n>f</span><span class=o>-&gt;</span><span class=n>base</span> <span class=o>!=</span> <span class=nb>NULL</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=nf>free</span><span class=p>(</span><span class=n>f</span><span class=o>-&gt;</span><span class=n>base</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=n>f</span><span class=o>-&gt;</span><span class=n>base</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=n>f</span><span class=o>-&gt;</span><span class=n>flag</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=n>f</span><span class=o>-&gt;</span><span class=n>fd</span> <span class=o>=</span> <span class=o>-</span><span class=mi>1</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 关闭文件描述符
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=k>return</span> <span class=nf>close</span><span class=p>(</span><span class=n>fd</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kt>int</span> <span class=nf>main</span><span class=p>(</span><span class=kt>int</span> <span class=n>argc</span><span class=p>,</span> <span class=kt>char</span> <span class=o>*</span><span class=n>argv</span><span class=p>[])</span>
+</span></span><span class=line><span class=cl><span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=n>FILE</span> <span class=o>*</span><span class=n>fp</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=n>fp</span> <span class=o>=</span> <span class=nf>fopen</span><span class=p>(</span><span class=s>&#34;test01.txt&#34;</span><span class=p>,</span> <span class=s>&#34;r&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=kt>char</span> <span class=n>c</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=k>while</span> <span class=p>((</span><span class=n>c</span> <span class=o>=</span> <span class=nf>getc</span><span class=p>(</span><span class=n>fp</span><span class=p>))</span> <span class=o>!=</span> <span class=n>EOF</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=nf>putc</span><span class=p>(</span><span class=n>c</span><span class=p>,</span> <span class=n>stdout</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=nf>fflush</span><span class=p>(</span><span class=n>stdout</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=nf>fclose</span><span class=p>(</span><span class=n>fp</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>运行：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>➜  ch08 git:<span class=o>(</span>main<span class=o>)</span> ✗ ./Exercise8-3 test01.txt 
+</span></span><span class=line><span class=cl>This is test01.txt
+</span></span><span class=line><span class=cl>Good idea.
+</span></span></code></pre></td></tr></table></div></div><h2 id=exercise8-4>exercise8-4<a hidden class=anchor aria-hidden=true href=#exercise8-4>#</a></h2><blockquote><p>标准库函数<code>int fseek(FILE *fp, long offset, int origin)</code>类似于函数 lseek，所不同的是，该函数中的 fp 是一个文件指针而不是文件描述符，且返回值是一个 int 类型的状态而非位置值。编写函数 fseek，并确保该函数与库中其它函数使用的缓冲能够协同工作。</p></blockquote><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-c data-lang=c><span class=line><span class=cl><span class=cm>/* 将读写指针置于一定位置 */</span>
+</span></span><span class=line><span class=cl><span class=kt>int</span> <span class=nf>fseek</span><span class=p>(</span><span class=n>FILE</span> <span class=o>*</span><span class=n>fp</span><span class=p>,</span> <span class=kt>long</span> <span class=n>offset</span><span class=p>,</span> <span class=kt>int</span> <span class=n>origin</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>((</span><span class=n>fp</span><span class=o>-&gt;</span><span class=n>flag</span> <span class=o>&amp;</span> <span class=n>_UNBUF</span><span class=p>)</span> <span class=o>==</span> <span class=mi>0</span> <span class=o>&amp;&amp;</span> <span class=n>fp</span><span class=o>-&gt;</span><span class=n>base</span> <span class=o>!=</span> <span class=nb>NULL</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=c1>// 如果是写入模式，刷新缓冲区，将缓冲区内容输出，防止写入一个不为空的缓冲区
+</span></span></span><span class=line><span class=cl><span class=c1></span>        <span class=k>if</span> <span class=p>(</span><span class=n>fp</span><span class=o>-&gt;</span><span class=n>flag</span> <span class=o>&amp;</span> <span class=n>_WRITE</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=nf>fflush</span><span class=p>(</span><span class=n>fp</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>        <span class=c1>// 如果是读取模式，将缓冲区内容清空，防止读取一个不为空的缓冲区
+</span></span></span><span class=line><span class=cl><span class=c1></span>        <span class=k>else</span> <span class=k>if</span> <span class=p>(</span><span class=n>fp</span><span class=o>-&gt;</span><span class=n>flag</span> <span class=o>&amp;</span> <span class=n>_READ</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=p>{</span>
+</span></span><span class=line><span class=cl>            <span class=n>fp</span><span class=o>-&gt;</span><span class=n>cnt</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>            <span class=n>fp</span><span class=o>-&gt;</span><span class=n>ptr</span> <span class=o>=</span> <span class=n>fp</span><span class=o>-&gt;</span><span class=n>base</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=p>(</span><span class=nf>lseek</span><span class=p>(</span><span class=n>fp</span><span class=o>-&gt;</span><span class=n>fd</span><span class=p>,</span> <span class=n>offset</span><span class=p>,</span> <span class=n>origin</span><span class=p>)</span> <span class=o>&lt;</span> <span class=mi>0</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kt>int</span> <span class=nf>main</span><span class=p>(</span><span class=kt>int</span> <span class=n>argc</span><span class=p>,</span> <span class=kt>char</span> <span class=o>*</span><span class=n>argv</span><span class=p>[])</span>
+</span></span><span class=line><span class=cl><span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=n>FILE</span> <span class=o>*</span><span class=n>fp</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>(</span><span class=n>argc</span> <span class=o>==</span> <span class=mi>1</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=mi>1</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=n>fp</span> <span class=o>=</span> <span class=nf>fopen</span><span class=p>(</span><span class=n>argv</span><span class=p>[</span><span class=mi>1</span><span class=p>],</span> <span class=s>&#34;r&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=kt>off_t</span> <span class=n>offset</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>(</span><span class=n>argc</span> <span class=o>==</span> <span class=mi>3</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=n>offset</span> <span class=o>=</span> <span class=nf>atol</span><span class=p>(</span><span class=n>argv</span><span class=p>[</span><span class=mi>2</span><span class=p>]);</span>
+</span></span><span class=line><span class=cl>    <span class=kt>char</span> <span class=n>c</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=nf>fseek</span><span class=p>(</span><span class=n>fp</span><span class=p>,</span> <span class=n>offset</span><span class=p>,</span> <span class=n>SEEK_SET</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=k>while</span> <span class=p>((</span><span class=n>c</span> <span class=o>=</span> <span class=nf>getc</span><span class=p>(</span><span class=n>fp</span><span class=p>))</span> <span class=o>!=</span> <span class=n>EOF</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=nf>putc</span><span class=p>(</span><span class=n>c</span><span class=p>,</span> <span class=n>stdout</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=nf>fflush</span><span class=p>(</span><span class=n>stdout</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=nf>fclose</span><span class=p>(</span><span class=n>fp</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>运行：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>➜  ch08 git:<span class=o>(</span>main<span class=o>)</span> ✗ ./Exercise8-4 test01.txt <span class=m>12</span>
+</span></span><span class=line><span class=cl>01.txt
+</span></span><span class=line><span class=cl>Good idea.
+</span></span></code></pre></td></tr></table></div></div><h2 id=exercise8-5>exercise8-5<a hidden class=anchor aria-hidden=true href=#exercise8-5>#</a></h2><blockquote><p>修改 fsize 程序，打印 i 结点项中包含的其它信息。</p></blockquote><p>书中提供的代码有一些问题：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-c data-lang=c><span class=line><span class=cl><span class=cm>/* readdir: read directory entries in sequence */</span>
+</span></span><span class=line><span class=cl><span class=n>Dirent</span> <span class=o>*</span><span class=nf>mreaddir</span><span class=p>(</span><span class=n>mDIR</span> <span class=o>*</span><span class=n>dp</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=k>struct</span> <span class=n>direct</span> <span class=n>dirbuf</span><span class=p>;</span> <span class=cm>/* local directory structure */</span>
+</span></span><span class=line><span class=cl>    <span class=k>static</span> <span class=n>Dirent</span> <span class=n>d</span><span class=p>;</span>      <span class=cm>/* return: portable structure */</span>
+</span></span><span class=line><span class=cl>    <span class=kt>int</span> <span class=n>readsize</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// 此版本的read无法读取一个目录文件，下面的语句执行之后 readsize 始终为-1
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=c1>// 在其他测试程序中单独测试了使用 read() 来读取一个目录文件，也是得到相同的结论
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=c1>// 所以就在本步骤，只好使用系统提供的 readdir() 来读取一个目录文件的信息
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=k>while</span> <span class=p>((</span><span class=n>readsize</span> <span class=o>=</span> <span class=nf>read</span><span class=p>(</span><span class=n>dp</span><span class=o>-&gt;</span><span class=n>fd</span><span class=p>,</span> <span class=p>(</span><span class=kt>char</span> <span class=o>*</span><span class=p>)</span><span class=o>&amp;</span><span class=n>dirbuf</span><span class=p>,</span> <span class=k>sizeof</span><span class=p>(</span><span class=n>dirbuf</span><span class=p>)))</span> <span class=o>==</span> <span class=k>sizeof</span><span class=p>(</span><span class=n>dirbuf</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>    <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=n>dirbuf</span><span class=p>.</span><span class=n>d_ino</span> <span class=o>==</span> <span class=mi>0</span><span class=p>)</span> <span class=cm>/* slot not in use */</span>
+</span></span><span class=line><span class=cl>            <span class=k>continue</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>        <span class=n>d</span><span class=p>.</span><span class=n>ino</span> <span class=o>=</span> <span class=n>dirbuf</span><span class=p>.</span><span class=n>d_ino</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>        <span class=nf>strncpy</span><span class=p>(</span><span class=n>d</span><span class=p>.</span><span class=n>name</span><span class=p>,</span> <span class=n>dirbuf</span><span class=p>.</span><span class=n>d_name</span><span class=p>,</span> <span class=n>DIRSIZ</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>        <span class=n>d</span><span class=p>.</span><span class=n>name</span><span class=p>[</span><span class=n>DIRSIZ</span><span class=p>]</span> <span class=o>=</span> <span class=sc>&#39;\0&#39;</span><span class=p>;</span> <span class=cm>/* ensure termination */</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=o>&amp;</span><span class=n>d</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>经过修改，下面的代码可以实现递归打印目录中的文件及子目录内容：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span><span class=lnt>49
+</span><span class=lnt>50
+</span><span class=lnt>51
+</span><span class=lnt>52
+</span><span class=lnt>53
+</span><span class=lnt>54
+</span><span class=lnt>55
+</span><span class=lnt>56
+</span><span class=lnt>57
+</span><span class=lnt>58
+</span><span class=lnt>59
+</span><span class=lnt>60
+</span><span class=lnt>61
+</span><span class=lnt>62
+</span><span class=lnt>63
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-c data-lang=c><span class=line><span class=cl><span class=cp>#include</span> <span class=cpf>&#34;./dirent.h&#34;</span><span class=cp>
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=cp>#define MAX_PATH 1024
+</span></span></span><span class=line><span class=cl><span class=cp></span>
+</span></span><span class=line><span class=cl><span class=n>Dirent</span> <span class=o>*</span><span class=nf>mreaddir02</span><span class=p>(</span><span class=n>DIR</span> <span class=o>*</span><span class=n>dp</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=k>struct</span> <span class=n>direct</span> <span class=o>*</span><span class=n>dirbuf</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=k>static</span> <span class=n>Dirent</span> <span class=n>d</span><span class=p>;</span> <span class=c1>// 静态变量
+</span></span></span><span class=line><span class=cl><span class=c1></span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>((</span><span class=n>dirbuf</span> <span class=o>=</span> <span class=nf>readdir</span><span class=p>(</span><span class=n>dp</span><span class=p>))</span> <span class=o>==</span> <span class=nb>NULL</span> <span class=o>||</span> <span class=n>dirbuf</span><span class=o>-&gt;</span><span class=n>d_ino</span> <span class=o>==</span> <span class=mi>0</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=n>d</span><span class=p>.</span><span class=n>ino</span> <span class=o>=</span> <span class=n>dirbuf</span><span class=o>-&gt;</span><span class=n>d_ino</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=nf>strncpy</span><span class=p>(</span><span class=n>d</span><span class=p>.</span><span class=n>name</span><span class=p>,</span> <span class=n>dirbuf</span><span class=o>-&gt;</span><span class=n>d_name</span><span class=p>,</span> <span class=n>DIRSIZ</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=n>d</span><span class=p>.</span><span class=n>name</span><span class=p>[</span><span class=n>DIRSIZ</span><span class=p>]</span> <span class=o>=</span> <span class=sc>&#39;\0&#39;</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=o>&amp;</span><span class=n>d</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=cm>/* dirwalk: apply fcn to all files in dir */</span>
+</span></span><span class=line><span class=cl><span class=kt>void</span> <span class=nf>dirwalk</span><span class=p>(</span><span class=kt>char</span> <span class=o>*</span><span class=n>dir</span><span class=p>,</span> <span class=kt>void</span> <span class=p>(</span><span class=o>*</span><span class=n>fcn</span><span class=p>)(</span><span class=kt>char</span> <span class=o>*</span><span class=p>))</span>
+</span></span><span class=line><span class=cl><span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=kt>char</span> <span class=n>name</span><span class=p>[</span><span class=n>MAX_PATH</span><span class=p>];</span>
+</span></span><span class=line><span class=cl>    <span class=n>Dirent</span> <span class=o>*</span><span class=n>dp</span> <span class=o>=</span> <span class=nf>malloc</span><span class=p>(</span><span class=k>sizeof</span><span class=p>(</span><span class=n>Dirent</span><span class=p>));</span>
+</span></span><span class=line><span class=cl>    <span class=nf>memset</span><span class=p>(</span><span class=n>dp</span><span class=o>-&gt;</span><span class=n>name</span><span class=p>,</span> <span class=mi>0</span><span class=p>,</span> <span class=k>sizeof</span><span class=p>(</span><span class=n>dp</span><span class=o>-&gt;</span><span class=n>name</span><span class=p>));</span>
+</span></span><span class=line><span class=cl>    <span class=n>DIR</span> <span class=o>*</span><span class=n>dfd</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 直接使用系统的opendir()
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=k>if</span> <span class=p>((</span><span class=n>dfd</span> <span class=o>=</span> <span class=nf>opendir</span><span class=p>(</span><span class=n>dir</span><span class=p>))</span> <span class=o>==</span> <span class=nb>NULL</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=nf>fprintf</span><span class=p>(</span><span class=n>stderr</span><span class=p>,</span> <span class=s>&#34;dirwalk: can&#39;t open %s</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>dir</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl>    <span class=k>while</span> <span class=p>((</span><span class=n>dp</span> <span class=o>=</span> <span class=nf>mreaddir02</span><span class=p>(</span><span class=n>dfd</span><span class=p>))</span> <span class=o>!=</span> <span class=nb>NULL</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=nf>strcmp</span><span class=p>(</span><span class=n>dp</span><span class=o>-&gt;</span><span class=n>name</span><span class=p>,</span> <span class=s>&#34;.&#34;</span><span class=p>)</span> <span class=o>==</span> <span class=mi>0</span> <span class=o>||</span> <span class=nf>strcmp</span><span class=p>(</span><span class=n>dp</span><span class=o>-&gt;</span><span class=n>name</span><span class=p>,</span> <span class=s>&#34;..&#34;</span><span class=p>)</span> <span class=o>==</span> <span class=mi>0</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=k>continue</span><span class=p>;</span> <span class=cm>/* skip self and parent */</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=nf>strlen</span><span class=p>(</span><span class=n>dir</span><span class=p>)</span> <span class=o>+</span> <span class=nf>strlen</span><span class=p>(</span><span class=n>dp</span><span class=o>-&gt;</span><span class=n>name</span><span class=p>)</span> <span class=o>+</span> <span class=mi>2</span> <span class=o>&gt;</span> <span class=k>sizeof</span><span class=p>(</span><span class=n>name</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>            <span class=nf>fprintf</span><span class=p>(</span><span class=n>stderr</span><span class=p>,</span> <span class=s>&#34;dirwalk: name %s %s too long</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>                    <span class=n>dir</span><span class=p>,</span> <span class=n>dp</span><span class=o>-&gt;</span><span class=n>name</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>        <span class=k>else</span>
+</span></span><span class=line><span class=cl>        <span class=p>{</span>
+</span></span><span class=line><span class=cl>            <span class=nf>sprintf</span><span class=p>(</span><span class=n>name</span><span class=p>,</span> <span class=s>&#34;%s/%s&#34;</span><span class=p>,</span> <span class=n>dir</span><span class=p>,</span> <span class=n>dp</span><span class=o>-&gt;</span><span class=n>name</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>            <span class=p>(</span><span class=o>*</span><span class=n>fcn</span><span class=p>)(</span><span class=n>name</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 直接使用系统提供的closedir()
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nf>closedir</span><span class=p>(</span><span class=n>dfd</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=kt>void</span> <span class=nf>fsize</span><span class=p>(</span><span class=kt>char</span> <span class=o>*</span><span class=n>name</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=k>struct</span> <span class=n>stat</span> <span class=n>stbuf</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>(</span><span class=nf>stat</span><span class=p>(</span><span class=n>name</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>stbuf</span><span class=p>)</span> <span class=o>==</span> <span class=o>-</span><span class=mi>1</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=nf>fprintf</span><span class=p>(</span><span class=n>stderr</span><span class=p>,</span> <span class=s>&#34;fsize: can&#39;t access %s</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>name</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>(</span><span class=nf>S_ISDIR</span><span class=p>(</span><span class=n>stbuf</span><span class=p>.</span><span class=n>st_mode</span><span class=p>))</span> <span class=cm>/* directory */</span>
+</span></span><span class=line><span class=cl>        <span class=nf>dirwalk</span><span class=p>(</span><span class=n>name</span><span class=p>,</span> <span class=n>fsize</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=kt>char</span> <span class=n>timebuf</span><span class=p>[</span><span class=mi>32</span><span class=p>];</span>
+</span></span><span class=line><span class=cl>    <span class=nf>strftime</span><span class=p>(</span><span class=n>timebuf</span><span class=p>,</span> <span class=k>sizeof</span><span class=p>(</span><span class=n>timebuf</span><span class=p>),</span> <span class=s>&#34;%b %d %R&#34;</span><span class=p>,</span> <span class=nf>localtime</span><span class=p>(</span><span class=o>&amp;</span><span class=n>stbuf</span><span class=p>.</span><span class=n>st_mtime</span><span class=p>));</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 展示文件大小，文件的inode号，文件的最后修改时间，文件名
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nf>printf</span><span class=p>(</span><span class=s>&#34;%8ldB %8ld  %s %s</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>stbuf</span><span class=p>.</span><span class=n>st_size</span><span class=p>,</span> <span class=n>stbuf</span><span class=p>.</span><span class=n>st_ino</span><span class=p>,</span> <span class=n>timebuf</span><span class=p>,</span> <span class=n>name</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>运行，打印文件的大小、inode节点号、最后修改日期、文件名</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>➜  ch08 git:<span class=o>(</span>main<span class=o>)</span> ✗ ./Exercise8-5 /home/jagger/Codes/ch08
+</span></span><span class=line><span class=cl>    1300B   <span class=m>149492</span>  Oct <span class=m>19</span> 10:11 /home/jagger/Codes/ch08/Exercise8-1.c
+</span></span><span class=line><span class=cl>    6917B   <span class=m>149495</span>  Oct <span class=m>23</span> 12:59 /home/jagger/Codes/ch08/Exercise8-4.c
+</span></span><span class=line><span class=cl>      28B   <span class=m>149503</span>  Oct <span class=m>19</span> 10:13 /home/jagger/Codes/ch08/test02.txt
+</span></span><span class=line><span class=cl>      40B   <span class=m>149491</span>  Oct <span class=m>19</span> 09:49 /home/jagger/Codes/ch08/.gitignore
+</span></span><span class=line><span class=cl>    1461B   <span class=m>149502</span>  Oct <span class=m>19</span> 11:29 /home/jagger/Codes/ch08/Exercise8-8.c
+</span></span><span class=line><span class=cl>   13464B   <span class=m>149490</span>  Oct <span class=m>23</span> 15:12 /home/jagger/Codes/ch08/README.md
+</span></span><span class=line><span class=cl>    3134B   <span class=m>149498</span>  Oct <span class=m>20</span> 14:04 /home/jagger/Codes/ch08/Exercise8-6.c
+</span></span><span class=line><span class=cl>     662B   <span class=m>149504</span>  Oct <span class=m>20</span> 13:12 /home/jagger/Codes/ch08/dirent.h
+</span></span><span class=line><span class=cl>     399B   <span class=m>149505</span>  Oct <span class=m>23</span> 13:32 /home/jagger/Codes/ch08/test.c
+</span></span><span class=line><span class=cl>    3362B   <span class=m>149497</span>  Oct <span class=m>23</span> 15:00 /home/jagger/Codes/ch08/Exercise8-5.c
+</span></span><span class=line><span class=cl>      30B   <span class=m>149496</span>  Oct <span class=m>23</span> 11:34 /home/jagger/Codes/ch08/test01.txt
+</span></span><span class=line><span class=cl>     819B   <span class=m>149499</span>  Oct <span class=m>20</span> 13:43 /home/jagger/Codes/ch08/Exercise8-7.c
+</span></span><span class=line><span class=cl>    6202B   <span class=m>149494</span>  Oct <span class=m>23</span> 11:47 /home/jagger/Codes/ch08/Exercise8-3.c
+</span></span><span class=line><span class=cl>      75B   <span class=m>149501</span>  Oct <span class=m>19</span> 09:50 /home/jagger/Codes/ch08/createfile.sh
+</span></span><span class=line><span class=cl>   23016B   <span class=m>149506</span>  Oct <span class=m>23</span> 15:13 /home/jagger/Codes/ch08/Exercise8-5
+</span></span><span class=line><span class=cl>     209B   <span class=m>149500</span>  Oct <span class=m>19</span> 09:51 /home/jagger/Codes/ch08/Makefile
+</span></span><span class=line><span class=cl>    3511B   <span class=m>149493</span>  Oct <span class=m>19</span> 11:22 /home/jagger/Codes/ch08/Exercise8-2.c
+</span></span><span class=line><span class=cl>    4096B   <span class=m>149489</span>  Oct <span class=m>23</span> 15:13 /home/jagger/Codes/ch08
+</span></span></code></pre></td></tr></table></div></div><h2 id=exercise8-6>exercise8-6<a hidden class=anchor aria-hidden=true href=#exercise8-6>#</a></h2><blockquote><p>标准库函数 calloc(n, size)返回一个指针，它指向 n 个长度为 size的对象，且所有分配的存储空间都被初始化为0。通过调用或修改 malloc函数来实现 calloc函数。</p></blockquote><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-c data-lang=c><span class=line><span class=cl><span class=kt>void</span> <span class=o>*</span><span class=nf>mcalloc</span><span class=p>(</span><span class=kt>size_t</span> <span class=n>n</span><span class=p>,</span> <span class=kt>size_t</span> <span class=n>size</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=kt>void</span> <span class=o>*</span><span class=n>p</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=n>p</span> <span class=o>=</span> <span class=nf>malloc</span><span class=p>(</span><span class=n>n</span> <span class=o>*</span> <span class=n>size</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>(</span><span class=n>p</span> <span class=o>!=</span> <span class=nb>NULL</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=nf>bzero</span><span class=p>(</span><span class=n>p</span><span class=p>,</span> <span class=n>n</span> <span class=o>*</span> <span class=n>size</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>p</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kt>int</span> <span class=nf>main</span><span class=p>(</span><span class=kt>void</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=kt>int</span> <span class=n>size</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=kt>int</span> <span class=o>*</span><span class=n>p</span> <span class=o>=</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=nf>printf</span><span class=p>(</span><span class=s>&#34;Enter the size of memory to allocate: &#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=nf>scanf</span><span class=p>(</span><span class=s>&#34;%d&#34;</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>size</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=n>p</span> <span class=o>=</span> <span class=p>(</span><span class=kt>int</span> <span class=o>*</span><span class=p>)</span><span class=nf>mcalloc</span><span class=p>(</span><span class=n>size</span><span class=p>,</span> <span class=k>sizeof</span><span class=p>(</span><span class=o>*</span><span class=n>p</span><span class=p>));</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>(</span><span class=n>p</span> <span class=o>!=</span> <span class=nb>NULL</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=nf>printf</span><span class=p>(</span><span class=s>&#34;Memory allocated successfully</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>        <span class=k>for</span> <span class=p>(</span><span class=kt>int</span> <span class=n>i</span> <span class=o>=</span> <span class=mi>0</span><span class=p>;</span> <span class=n>i</span> <span class=o>&lt;</span> <span class=n>size</span><span class=p>;</span> <span class=n>i</span><span class=o>++</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=p>{</span>
+</span></span><span class=line><span class=cl>            <span class=nf>printf</span><span class=p>(</span><span class=s>&#34;%08X &#34;</span><span class=p>,</span> <span class=n>p</span><span class=p>[</span><span class=n>i</span><span class=p>]);</span>
+</span></span><span class=line><span class=cl>            <span class=k>if</span> <span class=p>(</span><span class=n>i</span> <span class=o>%</span> <span class=mi>8</span> <span class=o>==</span> <span class=mi>7</span><span class=p>)</span>            
+</span></span><span class=line><span class=cl>                <span class=nf>printf</span><span class=p>(</span><span class=s>&#34;</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>运行：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>Enter the size of memory to allocate: <span class=m>12</span>
+</span></span><span class=line><span class=cl>Memory allocated successfully
+</span></span><span class=line><span class=cl><span class=m>00000000</span> <span class=m>00000000</span> <span class=m>00000000</span> <span class=m>00000000</span> <span class=m>00000000</span> <span class=m>00000000</span> <span class=m>00000000</span> <span class=m>00000000</span> 
+</span></span><span class=line><span class=cl><span class=m>00000000</span> <span class=m>00000000</span> <span class=m>00000000</span> <span class=m>00000000</span> 
+</span></span></code></pre></td></tr></table></div></div><h2 id=exercise8-7>exercise8-7<a hidden class=anchor aria-hidden=true href=#exercise8-7>#</a></h2><blockquote><p>malloc 接收对存储空间的请求时，并不检查请求长度的合理性；而 free则认为被释放的块包含一个有效的长度字段。改进这些函数，使它们具有错误检查的功能。</p></blockquote><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-c data-lang=c><span class=line><span class=cl><span class=kt>void</span> <span class=o>*</span><span class=nf>mmalloc</span><span class=p>(</span><span class=kt>int</span> <span class=n>size</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>(</span><span class=n>size</span> <span class=o>&lt;=</span> <span class=mi>0</span> <span class=o>||</span> <span class=n>size</span> <span class=o>&gt;</span> <span class=n>MAXSIZE</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=nf>fprintf</span><span class=p>(</span><span class=n>stderr</span><span class=p>,</span> <span class=s>&#34;Invalid allocation size: %d Bytes</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>size</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=nb>NULL</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span> <span class=k>else</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=kt>void</span> <span class=o>*</span><span class=n>ptr</span> <span class=o>=</span> <span class=nf>malloc</span><span class=p>(</span><span class=n>size</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=p>(</span><span class=n>ptr</span> <span class=o>==</span> <span class=nb>NULL</span><span class=p>)</span> 
+</span></span><span class=line><span class=cl>            <span class=nf>fprintf</span><span class=p>(</span><span class=n>stderr</span><span class=p>,</span> <span class=s>&#34;Memory allocation failed</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>);</span>      
+</span></span><span class=line><span class=cl>        <span class=nf>printf</span><span class=p>(</span><span class=s>&#34;Memory allocated successfully</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>ptr</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kt>void</span> <span class=nf>mfree</span><span class=p>(</span><span class=kt>void</span> <span class=o>*</span><span class=n>ptr</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>(</span><span class=n>ptr</span> <span class=o>==</span> <span class=nb>NULL</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=nf>fprintf</span><span class=p>(</span><span class=n>stderr</span><span class=p>,</span> <span class=s>&#34;Attempt to free a null pointer</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl>    <span class=nf>printf</span><span class=p>(</span><span class=s>&#34;Memory freed successfully</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=nf>free</span><span class=p>(</span><span class=n>ptr</span><span class=p>);</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kt>int</span> <span class=nf>main</span><span class=p>()</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=kt>int</span> <span class=n>size</span><span class=p>;</span>
+</span></span><span class=line><span class=cl>    <span class=nf>printf</span><span class=p>(</span><span class=s>&#34;Enter the size of memory to allocate: &#34;</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=nf>scanf</span><span class=p>(</span><span class=s>&#34;%d&#34;</span><span class=p>,</span> <span class=o>&amp;</span><span class=n>size</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=kt>void</span> <span class=o>*</span><span class=n>ptr</span> <span class=o>=</span> <span class=nf>mmalloc</span><span class=p>(</span><span class=n>size</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=p>(</span><span class=n>ptr</span> <span class=o>!=</span> <span class=nb>NULL</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=nf>mfree</span><span class=p>(</span><span class=n>ptr</span><span class=p>);</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=mi>0</span><span class=p>;</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>运行：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>Enter the size of memory to allocate: -1
+</span></span><span class=line><span class=cl>Invalid allocation size: -1 Bytes
+</span></span></code></pre></td></tr></table></div></div></div><footer class=post-footer><ul class=post-tags><li><a href=https://fireflyyh.top/tags/tcpl/>TCPL</a></li></ul><nav class=paginav><a class=next href=https://fireflyyh.top/posts/tcpl/ch07/><span class=title>Next »</span><br><span>C语言程序设计第二版课后习题--第七章</span></a></nav></footer></article></main><footer class=footer><span>&copy; 2024 <a href=https://fireflyyh.top/>Jagger's Blog</a></span> ·
+<span>Powered by
+<a href=https://gohugo.io/ rel="noopener noreferrer" target=_blank>Hugo</a> &
+        <a href=https://github.com/adityatelange/hugo-PaperMod/ rel=noopener target=_blank>PaperMod</a></span></footer><a href=#top aria-label="go to top" title="Go to Top (Alt + G)" class=top-link id=top-link accesskey=g><svg viewBox="0 0 12 6" fill="currentcolor"><path d="M12 6H0l6-6z"/></svg>
+</a><script>let menu=document.getElementById("menu");menu&&(menu.scrollLeft=localStorage.getItem("menu-scroll-position"),menu.onscroll=function(){localStorage.setItem("menu-scroll-position",menu.scrollLeft)}),document.querySelectorAll('a[href^="#"]').forEach(e=>{e.addEventListener("click",function(e){e.preventDefault();var t=this.getAttribute("href").substr(1);window.matchMedia("(prefers-reduced-motion: reduce)").matches?document.querySelector(`[id='${decodeURIComponent(t)}']`).scrollIntoView():document.querySelector(`[id='${decodeURIComponent(t)}']`).scrollIntoView({behavior:"smooth"}),t==="top"?history.replaceState(null,null," "):history.pushState(null,null,`#${t}`)})})</script><script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script><script>document.getElementById("theme-toggle").addEventListener("click",()=>{document.body.className.includes("dark")?(document.body.classList.remove("dark"),localStorage.setItem("pref-theme","light")):(document.body.classList.add("dark"),localStorage.setItem("pref-theme","dark"))})</script><script>document.querySelectorAll("pre > code").forEach(e=>{const s=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function i(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),i();return}const n=document.createRange();n.selectNodeContents(e);const s=window.getSelection();s.removeAllRanges(),s.addRange(n);try{document.execCommand("copy"),i()}catch{}s.removeRange(n)});let l=e.className.replaceAll("language-",""),n=document.createElement("div"),a=document.createElement("div"),r=document.createElement("div"),c=document.createElement("div"),o=document.createElement("div");o.innerText=l,n.setAttribute("class","mac-tool"),a.setAttribute("class","mac bb1"),r.setAttribute("class","mac bb2"),c.setAttribute("class","mac bb3"),o.setAttribute("class","language-type"),n.appendChild(a),n.appendChild(r),n.appendChild(c),n.appendChild(o),s.classList.contains("highlight")?(s.appendChild(n),s.appendChild(t)):s.parentNode.firstChild==s||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?(s.appendChild(n),e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t)):(s.appendChild(n),e.parentNode.appendChild(t)))})</script></body></html>
