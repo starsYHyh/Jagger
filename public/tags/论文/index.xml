@@ -15,9 +15,9 @@
     <atom:link href="https://fireflyyh.top/tags/%E8%AE%BA%E6%96%87/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>The Google File System</title>
-      <link>https://fireflyyh.top/posts/distributionsystem/gfs%E7%BF%BB%E8%AF%91/</link>
+      <link>https://fireflyyh.top/posts/distributionsystem/gfs/</link>
       <pubDate>Thu, 24 Oct 2024 00:00:00 +0000</pubDate>
-      <guid>https://fireflyyh.top/posts/distributionsystem/gfs%E7%BF%BB%E8%AF%91/</guid>
+      <guid>https://fireflyyh.top/posts/distributionsystem/gfs/</guid>
       <description>摘要 我们设计并实现了谷歌文件系统，这是一个可扩展的分布式文件系统，适用于大型分布式数据密集型应用。该系统可在廉价的商品硬件上运行，同时提供容错功能，并能为大量客户端提供高聚合性能。
 我们的设计目标与之前的分布式文件系统有许多相同之处，但我们对应用工作负载和技术环境（包括当前和预期环境）的观察结果表明，我们的设计明显偏离了之前的一些文件系统假设。这促使我们重新审视传统的选择，探索完全不同的设计要点。
 文件系统成功地满足了我们的存储需求。它在谷歌内部被广泛部署，作为生成和处理我们的服务所使用的数据以及需要大型数据集的研发工作的存储平台。迄今为止，最大的集群在一千多台机器上的数千个磁盘上提供了数百 TB 的存储空间，并被数百个客户端并发访问。

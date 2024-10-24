@@ -15,9 +15,9 @@
     <atom:link href="https://fireflyyh.top/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>The Google File System</title>
-      <link>https://fireflyyh.top/posts/distributionsystem/gfs%E7%BF%BB%E8%AF%91/</link>
+      <link>https://fireflyyh.top/posts/distributionsystem/gfs/</link>
       <pubDate>Thu, 24 Oct 2024 00:00:00 +0000</pubDate>
-      <guid>https://fireflyyh.top/posts/distributionsystem/gfs%E7%BF%BB%E8%AF%91/</guid>
+      <guid>https://fireflyyh.top/posts/distributionsystem/gfs/</guid>
       <description>摘要 我们设计并实现了谷歌文件系统，这是一个可扩展的分布式文件系统，适用于大型分布式数据密集型应用。该系统可在廉价的商品硬件上运行，同时提供容错功能，并能为大量客户端提供高聚合性能。
 我们的设计目标与之前的分布式文件系统有许多相同之处，但我们对应用工作负载和技术环境（包括当前和预期环境）的观察结果表明，我们的设计明显偏离了之前的一些文件系统假设。这促使我们重新审视传统的选择，探索完全不同的设计要点。
 文件系统成功地满足了我们的存储需求。它在谷歌内部被广泛部署，作为生成和处理我们的服务所使用的数据以及需要大型数据集的研发工作的存储平台。迄今为止，最大的集群在一千多台机器上的数千个磁盘上提供了数百 TB 的存储空间，并被数百个客户端并发访问。
@@ -177,9 +177,9 @@ exercise1-2 做个实验，当 printf 函数的参数字符串中包含\c（其�
     </item>
     <item>
       <title>真题总结2</title>
-      <link>https://fireflyyh.top/posts/408/%E7%9C%9F%E9%A2%98%E6%80%BB%E7%BB%932/</link>
+      <link>https://fireflyyh.top/posts/408/summary02/</link>
       <pubDate>Sun, 08 Oct 2023 17:45:20 +0800</pubDate>
-      <guid>https://fireflyyh.top/posts/408/%E7%9C%9F%E9%A2%98%E6%80%BB%E7%BB%932/</guid>
+      <guid>https://fireflyyh.top/posts/408/summary02/</guid>
       <description>16年 单周期数据通路 单周期数据通路是一种简单的数据通路设计，每个时钟周期执行一条完整的指令，即每条指令的CPI为1，要考虑比较慢的指令，所以处理器的时钟频率较低。 这意味着每条指令执行过程中任何数据通路单元都只能被用一次，如果需要使用多次则必须将该数据通路单元复制多份。
 控制信号是CU根据指令操作码发出的信号，对于单周期处理器来说，每条指令的执行只有一个时钟周期，而在一个时钟周期内控制信号并不会变化。
 单周期数据通路必须有独立的指令存储器和数据存储器，因为处理器在一个周期内只能操作每个部件一次，而在一个周期内不可能对一个单端口存储器进行两次存取。且无法使用单总线数据通路，因为单总线数据通路将所有寄存器的输入出端都连接在一条公共通路上，一个时钟内只允许一次操作，无法完成指令的所有操作。
@@ -206,9 +206,9 @@ TSL指令实现互斥 1 2 3 4 5 6 do { while (TSL(&amp;amp;lock)); critical sect
     </item>
     <item>
       <title>真题总结1</title>
-      <link>https://fireflyyh.top/posts/408/%E7%9C%9F%E9%A2%98%E6%80%BB%E7%BB%931/</link>
+      <link>https://fireflyyh.top/posts/408/summary01/</link>
       <pubDate>Sun, 24 Sep 2023 00:00:00 +0000</pubDate>
-      <guid>https://fireflyyh.top/posts/408/%E7%9C%9F%E9%A2%98%E6%80%BB%E7%BB%931/</guid>
+      <guid>https://fireflyyh.top/posts/408/summary01/</guid>
       <description>10年 平衡二叉树的调整 LL调整 RR调整 RL调整 例如（原谅我图画的难看😂）：
 LR调整 二分查找的次数（成功失败）、折半查找判定树与二叉搜索树的关系 平衡二叉树是一种特殊的二叉查找树，它要求任何节点的两棵子树的高度差不超过1（同一棵树的不同节点的子树高度差可以为1、0、-1）。平衡二叉树通过在插入和删除节点时做旋转来维持树的平衡。
 折半查找判定树是一种特殊的平衡二叉树，它要求更加严格。同一棵树节点的左子树和右子树的差不能同时存在1和-1（即为统一向上取整或统一向下取整）。查找时，根据比较的结果折半排除一边的树。折半查找判定树中，只有最下面一层才可以不满。 根据完全二叉树的高度计算公式，元素个数为n时，树高 $h=\lceil log_2(n+1)\rceil$ 或 $h=\lfloor log_2(n)\rfloor+1$ 。在折半查找中，
