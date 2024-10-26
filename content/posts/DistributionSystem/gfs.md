@@ -1,4 +1,10 @@
-# The Google File System
+---
+title: "[论文翻译]The Google File System"
+date: 2024-10-25
+draft: false
+tags: ["分布式", "论文"]
+categories: ["Learning"]
+---
 
 ## 摘要
 
