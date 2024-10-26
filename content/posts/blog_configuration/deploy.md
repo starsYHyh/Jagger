@@ -215,6 +215,8 @@ server {
 }
 ```
 
+然后重启`nginx`服务：`sudo systemctl restart nginx`。
+
 ## 6. 站点分析
 
 ### 6.1 Google Analytics

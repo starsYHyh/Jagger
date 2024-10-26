@@ -45,7 +45,7 @@ exercise6-1 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26
       <pubDate>Sat, 12 Oct 2024 00:00:00 +0000</pubDate>
       <guid>https://fireflyyh.top/posts/tcpl/ch05/</guid>
       <description>部分答案参考了官方题解和网上的答案，仅供参考，可能也有部分bug未发现或解决。
-exerrcise5-1 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 int getint(int *pn) { int c, sign; while (isspace(c = getch())) /* skip white space */ ; if (!isdigit(c) &amp;amp;&amp;amp; c != EOF &amp;amp;&amp;amp; c != &amp;#39;+&amp;#39; &amp;amp;&amp;amp; c != &amp;#39;-&amp;#39;) { ungetch(c); /* it is not a number */ return 0; } sign = (c == &amp;#39;-&amp;#39;) ?</description>
+exercise5-1 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 int getint(int *pn) { int c, sign; while (isspace(c = getch())) /* skip white space */ ; if (!isdigit(c) &amp;amp;&amp;amp; c != EOF &amp;amp;&amp;amp; c != &amp;#39;+&amp;#39; &amp;amp;&amp;amp; c != &amp;#39;-&amp;#39;) { ungetch(c); /* it is not a number */ return 0; } sign = (c == &amp;#39;-&amp;#39;) ?</description>
     </item>
     <item>
       <title>C语言程序设计第二版课后习题--第四章</title>
