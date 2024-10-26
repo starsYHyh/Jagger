@@ -11,19 +11,8 @@
     </image>
     <generator>Hugo -- 0.129.0</generator>
     <language>en</language>
-    <lastBuildDate>Thu, 24 Oct 2024 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 23 Oct 2024 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://fireflyyh.top/categories/learning/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>The Google File System</title>
-      <link>https://fireflyyh.top/posts/distributionsystem/gfs/</link>
-      <pubDate>Thu, 24 Oct 2024 00:00:00 +0000</pubDate>
-      <guid>https://fireflyyh.top/posts/distributionsystem/gfs/</guid>
-      <description>&lt;h2 id=&#34;摘要&#34;&gt;摘要&lt;/h2&gt;
-&lt;p&gt;我们设计并实现了谷歌文件系统，这是一个可扩展的分布式文件系统，适用于大型分布式数据密集型应用。该系统可在廉价的商品硬件上运行，同时提供容错功能，并能为大量客户端提供高聚合性能。&lt;/p&gt;
-&lt;p&gt;我们的设计目标与之前的分布式文件系统有许多相同之处，但我们对应用工作负载和技术环境（包括当前和预期环境）的观察结果表明，我们的设计明显偏离了之前的一些文件系统假设。这促使我们重新审视传统的选择，探索完全不同的设计要点。&lt;/p&gt;
-&lt;p&gt;文件系统成功地满足了我们的存储需求。它在谷歌内部被广泛部署，作为生成和处理我们的服务所使用的数据以及需要大型数据集的研发工作的存储平台。迄今为止，最大的集群在一千多台机器上的数千个磁盘上提供了数百 TB 的存储空间，并被数百个客户端并发访问。&lt;/p&gt;
-&lt;p&gt;在本文中，我们介绍了为支持分布式应用而设计的文件系统接口扩展，讨论了我们设计的许多方面，并报告了微基准测试和实际使用的测量结果。&lt;/p&gt;</description>
-    </item>
     <item>
       <title>C语言程序设计第二版课后习题--第八章</title>
       <link>https://fireflyyh.top/posts/tcpl/ch08/</link>
