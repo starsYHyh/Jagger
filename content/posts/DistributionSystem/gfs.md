@@ -410,7 +410,7 @@ N 个客户端同时向 N 个不同的文件写入数据。每个客户端通过
 
 #### 6.3.4 主服务器工作负载
 
-![Table 6: Master Requests Breakdown by Type (%)](https://picgo-01.oss-cn-shanghai.aliyuncs.com/Images/gfsTable6.png)
+![Table 6: Master Requests Breakdown by Type (%)](https://picgo-01.oss-cn-shanghai.aliyuncs.com/Images/gfsTable6.png "Table 6: Master Requests Breakdown by Type (%)")
 
 **表 6** 显示了向主服务器发出的请求类型的明细。大多数请求询问数据块位置（FindLocation）以进行读取，以及租约持有者信息（FindLeaseLocker）以进行数据变更。
 
@@ -434,21 +434,21 @@ FindMatchingFiles 是一种支持 “ls” 和类似文件系统操作的模式�
 
 ## 8. 相关工作
 
-与其他大型分布式文件系统（如 AFS [5]）类似，GFS 提供了位置无关的命名空间，使得数据可以为负载平衡或容错而透明地移动。与 AFS 不同的是，GFS 将文件的数据分布在多个存储服务器上，这种方式更类似于 xFS [1] 和 Swift [3]，以实现聚合性能并提高容错能力。
+与其他大型分布式文件系统（如 AFS [^5]）类似，GFS 提供了位置无关的命名空间，使得数据可以为负载平衡或容错而透明地移动。与 AFS 不同的是，GFS 将文件的数据分布在多个存储服务器上，这种方式更类似于 xFS [^1] 和 Swift [^3]，以实现聚合性能并提高容错能力。
 
-由于磁盘相对便宜，且复制比更复杂的 RAID [9] 方法更简单，GFS 目前仅使用复制来实现冗余，因此比 xFS 或 Swift 消耗更多的原始存储。
+由于磁盘相对便宜，且复制比更复杂的 RAID [^9] 方法更简单，GFS 目前仅使用复制来实现冗余，因此比 xFS 或 Swift 消耗更多的原始存储。
 
-与 AFS、xFS、Frangipani [12] 和 Intermezzo [6] 等系统相比，GFS 不提供文件系统接口下的任何缓存。我们的目标工作负载在单个应用程序运行中几乎没有重用性，因为它们要么流经大型数据集，要么随机在其中查找并每次读取少量数据。
+与 AFS、xFS、Frangipani [^12] 和 Intermezzo [^6] 等系统相比，GFS 不提供文件系统接口下的任何缓存。我们的目标工作负载在单个应用程序运行中几乎没有重用性，因为它们要么流经大型数据集，要么随机在其中查找并每次读取少量数据。
 
-一些分布式文件系统，如 Frangipani、xFS、Minnesota 的 GFS[11] 和 GPFS [10] 移除了集中式服务器，并依靠分布式算法来实现一致性和管理。我们选择集中式方法是为了简化设计、提高可靠性并获得灵活性。特别是，集中式主服务器可以更轻松地实现复杂的块放置和复制策略，因为主服务器已经拥有大部分相关信息并控制其更改方式。我们通过保持主服务器状态较小并在其他机器上完全复制来解决容错问题。我们的影子主服务器机制目前提供可扩展性和高可用性（对于读取）。通过附加到预写日志，可以持久保存对主服务器状态的更新。因此，我们可以采用 Harp [7] 中的主副本方案，以提供比我们当前方案具有更强一致性保证的高可用性。
+一些分布式文件系统，如 Frangipani、xFS、Minnesota 的 GFS[^11] 和 GPFS [^10] 移除了集中式服务器，并依靠分布式算法来实现一致性和管理。我们选择集中式方法是为了简化设计、提高可靠性并获得灵活性。特别是，集中式主服务器可以更轻松地实现复杂的块放置和复制策略，因为主服务器已经拥有大部分相关信息并控制其更改方式。我们通过保持主服务器状态较小并在其他机器上完全复制来解决容错问题。我们的影子主服务器机制目前提供可扩展性和高可用性（对于读取）。通过附加到预写日志，可以持久保存对主服务器状态的更新。因此，我们可以采用 Harp [^7] 中的主副本方案，以提供比我们当前方案具有更强一致性保证的高可用性。
 
-我们正在解决与 Lustre [8] 类似的问题，即为大量客户提供总体性能。但是，我们通过专注于应用程序的需求而不是构建符合 POSIX 标准的文件系统，大大简化了这个问题。此外，GFS 假设存在大量不可靠的组件，因此容错是我们设计的核心。
+我们正在解决与 Lustre [^8] 类似的问题，即为大量客户提供总体性能。但是，我们通过专注于应用程序的需求而不是构建符合 POSIX 标准的文件系统，大大简化了这个问题。此外，GFS 假设存在大量不可靠的组件，因此容错是我们设计的核心。
 
-GFS 最接近 NASD 架构 [4]。虽然 NASD 架构基于网络连接的磁盘驱动器，但 GFS 使用商用机器作为分块服务器，这与 NASD 原型类似。与 NASD 工作不同的是，GFS 的分块服务器使用懒惰分配的固定大小块，而不是可变长度对象。此外，GFS 实现了生产环境中所需的负载均衡、复制和恢复等功能。
+GFS 最接近 NASD 架构 [^4]。虽然 NASD 架构基于网络连接的磁盘驱动器，但 GFS 使用商用机器作为分块服务器，这与 NASD 原型类似。与 NASD 工作不同的是，GFS 的分块服务器使用懒惰分配的固定大小块，而不是可变长度对象。此外，GFS 实现了生产环境中所需的负载均衡、复制和恢复等功能。
 
 与 Minnesota 的 GFS 和 NASD 不同，我们并不寻求改变存储设备的模型。我们专注于利用现有的商品组件满足复杂分布式系统的日常数据处理需求。
 
-由原子记录附加功能启用的生产者-消费者队列解决了与 River [2] 中的分布式队列类似的问题。虽然 River 使用分布在机器上的基于内存的队列和谨慎的数据流控制，但 GFS 使用可由许多生产者同时附加的持久文件。River 模型支持 m 对 n 分布式队列，但缺乏持久存储带来的容错能力，而 GFS 仅有效地支持 m 对 1 队列。多个消费者可以读取同一个文件，但他们必须协调以划分传入的负载。
+由原子记录附加功能启用的生产者-消费者队列解决了与 River [^2] 中的分布式队列类似的问题。虽然 River 使用分布在机器上的基于内存的队列和谨慎的数据流控制，但 GFS 使用可由许多生产者同时附加的持久文件。River 模型支持 m 对 n 分布式队列，但缺乏持久存储带来的容错能力，而 GFS 仅有效地支持 m 对 1 队列。多个消费者可以读取同一个文件，但他们必须协调以划分传入的负载。
 
 ## 9. 结论
 
@@ -464,26 +464,26 @@ GFS 成功满足了我们的存储需求，在 Google 内部被广泛用作研�
 
 ## 参考文献
 
-[1] Thomas Anderson, Michael Dahlin, Jeanna Neefe, David Patterson, Drew Roselli, and Randolph Wang. Serverless network file systems. In *Proceedings of the 15th ACM Symposium on Operating System Principles*, pages 109–126, Copper Mountain Resort, Colorado, December 1995.
+[^1]: Thomas Anderson, Michael Dahlin, Jeanna Neefe, David Patterson, Drew Roselli, and Randolph Wang. Serverless network file systems. In *Proceedings of the 15th ACM Symposium on Operating System Principles*, pages 109–126, Copper Mountain Resort, Colorado, December 1995.
 
-[2] Remzi H. Arpaci-Dusseau, Eric Anderson, Noah Treuhaft, David E. Culler, Joseph M. Hellerstein, David Patterson, and Kathy Yelick. Cluster I/O with River: Making the fast case common. *In Proceedings of the Sixth Workshop on Input/Output in Parallel and Distributed Systems (IOPADS '99)*, pages 10–22, Atlanta, Georgia, May 1999.
+[^2]: Remzi H. Arpaci-Dusseau, Eric Anderson, Noah Treuhaft, David E. Culler, Joseph M. Hellerstein, David Patterson, and Kathy Yelick. Cluster I/O with River: Making the fast case common. *In Proceedings of the Sixth Workshop on Input/Output in Parallel and Distributed Systems (IOPADS '99)*, pages 10–22, Atlanta, Georgia, May 1999.
 
-[3] Luis-Felipe Cabrera and Darrell D. E. Long. Swift: Using distributed diskstriping to provide high I/O data rates. *Computer Systems*, 4(4):405–436, 1991.
+[^3]: Luis-Felipe Cabrera and Darrell D. E. Long. Swift: Using distributed diskstriping to provide high I/O data rates. *Computer Systems*, 4(4):405–436, 1991.
 
-[4] Garth A. Gibson, David F. Nagle, Khalil Amiri, Jeff Butler, Fay W. Chang, Howard Gobioff, Charles Hardin, ErikRiedel, David Rochberg, and Jim Zelenka. A cost-effective, high-bandwidth storage architecture. In *Proceedings of the 8th Architectural Support for Programming Languages and Operating Systems*, pages 92–103, San Jose, California, October 1998.
+[^4]: Garth A. Gibson, David F. Nagle, Khalil Amiri, Jeff Butler, Fay W. Chang, Howard Gobioff, Charles Hardin, ErikRiedel, David Rochberg, and Jim Zelenka. A cost-effective, high-bandwidth storage architecture. In *Proceedings of the 8th Architectural Support for Programming Languages and Operating Systems*, pages 92–103, San Jose, California, October 1998.
 
-[5] John Howard, Michael Kazar, Sherri Menees, David Nichols, Mahadev Satyanarayanan, Robert Sidebotham, and Michael West. Scale and performance in a distributed file system. *ACM Transactions on Computer Systems*, 6(1):51–81, February 1988.
+[^5]: John Howard, Michael Kazar, Sherri Menees, David Nichols, Mahadev Satyanarayanan, Robert Sidebotham, and Michael West. Scale and performance in a distributed file system. *ACM Transactions on Computer Systems*, 6(1):51–81, February 1988.
 
-[6] InterMezzo. [https://www.inter-mezzo.org](https://www.inter-mezzo.org), 2003.
+[^6]: InterMezzo. [https://www.inter-mezzo.org](https://www.inter-mezzo.org), 2003.
 
-[7] Barbara Liskov, Sanjay Ghemawat, Robert Gruber, Paul Johnson, Liuba Shrira, and Michael Williams. Replication in the Harp file system. In *13th Symposium on Operating System Principles*, pages 226–238, Pacific Grove, CA, October 1991.
+[^7]: Barbara Liskov, Sanjay Ghemawat, Robert Gruber, Paul Johnson, Liuba Shrira, and Michael Williams. Replication in the Harp file system. In *13th Symposium on Operating System Principles*, pages 226–238, Pacific Grove, CA, October 1991.
 
-[8] Lustre. [http://www.lustreorg](http://www.lustreorg), 2003.
+[^8]: Lustre. [http://www.lustreorg](http://www.lustreorg), 2003.
 
-[9] David A. Patterson, Garth A. Gibson, and Randy H. Katz. A case for redundant arrays of inexpensive disks (RAID). In *Proceedings of the 1988 ACM SIGMOD International Conference on Management of Data*, pages 109–116, Chicago, Illinois, September 1988.
+[^9]: David A. Patterson, Garth A. Gibson, and Randy H. Katz. A case for redundant arrays of inexpensive disks (RAID). In *Proceedings of the 1988 ACM SIGMOD International Conference on Management of Data*, pages 109–116, Chicago, Illinois, September 1988.
 
-[10] FrankSchmuckand Roger Haskin. GPFS: A shared-diskfile system for large computing clusters. In *Proceedings of the First USENIX Conference on File and Storage Technologies*, pages 231–244, Monterey, California, January 2002.
+[^10]: FrankSchmuckand Roger Haskin. GPFS: A shared-diskfile system for large computing clusters. In *Proceedings of the First USENIX Conference on File and Storage Technologies*, pages 231–244, Monterey, California, January 2002.
 
-[11] Steven R. Soltis, Thomas M. Ruwart, and Matthew T. O’Keefe. The Gobal File System. In *Proceedings of the Fifth NASA Goddard Space Flight Center Conference on Mass Storage Systems and Technologies*, College Park, Maryland, September 1996.
+[^11]: Steven R. Soltis, Thomas M. Ruwart, and Matthew T. O’Keefe. The Gobal File System. In *Proceedings of the Fifth NASA Goddard Space Flight Center Conference on Mass Storage Systems and Technologies*, College Park, Maryland, September 1996.
 
-[12] Chandramohan A. Thekkath, Timothy Mann, and Edward K. Lee. Frangipani: A scalable distributed file system. In *Proceedings of the 16th ACM Symposium on Operating System Principles*, pages 224–237, Saint-Malo, France, October 1997.
+[^12]: Chandramohan A. Thekkath, Timothy Mann, and Edward K. Lee. Frangipani: A scalable distributed file system. In *Proceedings of the 16th ACM Symposium on Operating System Principles*, pages 224–237, Saint-Malo, France, October 1997.
