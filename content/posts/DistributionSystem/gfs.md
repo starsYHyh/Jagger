@@ -53,7 +53,7 @@ GFS 提供了一个熟悉的文件系统接口，尽管它没有实现标准的 
 
 如**图 1** 所示，GFS 集群由一个**主服务器**和多个**分块服务器**组成，并由多个**客户端**访问。每个客户端通常是一台运行用户级服务器进程的商用 Linux 机器。只要机器资源允许，并且可以接受运行可能不稳定的应用程序代码所带来的较低可靠性，在同一台机器上同时运行分块服务器和客户端是很容易的。
 
-![Figure 1: GFS Architecture](https://picgo-01.oss-cn-shanghai.aliyuncs.com/Images/gfsFigure1.png)
+![Figure 1: GFS Architecture](https://picgo-01.oss-cn-shanghai.aliyuncs.com/Images/gfsFigure1.png "Figure 1: GFS Architecture")
 
 文件被分成固定大小的**块**。每个分块都由主服务器程序在创建分块时分配的不可更改且全球唯一的 64 位**分块句柄**来标识。分块服务器将分块作为 Linux 文件存储在本地磁盘上，并读取或写入由分块句柄和字节范围指定的分块数据。为了保证可靠性，每个数据块都会在多个数据块服务器上复制。默认情况下，我们会存储三个副本，但用户可以为文件命名空间的不同区域指定不同的复制级别。
 
