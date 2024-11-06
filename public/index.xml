@@ -11,8 +11,23 @@
     </image>
     <generator>Hugo -- 0.129.0</generator>
     <language>en</language>
-    <lastBuildDate>Fri, 25 Oct 2024 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 06 Nov 2024 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://fireflyyh.top/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>[论文翻译]MapReduce: Simplified Data Processing on Large Clusters</title>
+      <link>https://fireflyyh.top/posts/distributionsystem/mapreduce/</link>
+      <pubDate>Wed, 06 Nov 2024 00:00:00 +0000</pubDate>
+      <guid>https://fireflyyh.top/posts/distributionsystem/mapreduce/</guid>
+      <description>摘要 $1_2$
+MapReduce 是一种用于处理和生成大型数据集的编程模型和相关实现。用户指定一个 map 函数来处理键/值对，生成一组中间键/值对，并指定一个 reduce 函数来合并与同一中间键相关的所有中间值。如本文所示，许多现实世界中的任务都可以用这个模型来表达。
+以这种函数式风格编写的程序会自动并行化，并在大型商用机器集群上执行。运行时系统会处理分割输入数据、调度程序在一组机器上的执行、处理机器故障以及管理所需的机器间通信等细节。这样，没有任何并行和分布式系统经验的程序员也能轻松利用大型分布式系统的资源。
+我们的 MapReduce 实现运行在大型商用机器集群上，并且具有高度可扩展性：典型的 MapReduce 计算在数千台机器上处理数 TB 的数据。程序员发现该系统易于使用：数百个 MapReduce 程序已经实现，并且每天在 Google 集群上执行超过一千个 MapReduce 作业。
+1 引言 在过去五年中，本文作者和 Google 的许多其他人已经实现了数百种特殊用途的计算，这些计算处理大量原始数据（例如抓取的文档、Web 请求日志等），以计算各种派生数据（例如倒排索引、Web 文档图形结构的各种表示、每个主机抓取的页面数量摘要、给定一天中最频繁的查询集等）。大多数此类计算在概念上都很简单。但是，输入数据通常很大，并且计算必须分布在数百或数千台机器上才能在合理的时间内完成。如何并行化计算、分发数据和处理故障的问题共同掩盖了原始的简单计算，并使用大量复杂的代码来处理这些问题。
+为了应对这种复杂性，我们设计了一种新的抽象，它允许我们表达我们试图执行的简单计算，但隐藏了库中的并行化、容错、数据分布和负载平衡的复杂细节。我们的抽象受到 Lisp 和许多其他函数式语言中存在的 map 和 Reduce 原语的启发。我们意识到，我们的大多数计算都涉及将 map 操作应用于输入中的每个逻辑“记录”，以计算一组中间键/值对，然后对共享相同键的所有值应用 Reduce 操作，以便适当地组合派生数据。我们使用具有用户指定的 map 和 Reduce 操作的函数模型，使我们能够轻松地并行化大型计算，并使用重新执行作为容错的主要机制。
+这项工作的主要贡献在于提供了一个简单而功能强大的接口，可实现大规模计算的自动并行化和分布式处理，同时还实现了该接口在大型商用 PC 集群上的高性能。
+第 2 节描述了基本编程模型并给出了几个示例。第 3 节描述了针对我们基于集群的计算环境定制的 MapReduce 接口实现。第 4 节描述了我们发现有用的编程模型的几个改进。第 5 节对我们的实现进行了各种任务的性能测量。第 6 节探讨了 MapReduce 在 Google 中的使用情况，包括我们使用它作为重写生产索引系统的基础的经验。第 7 节讨论了相关工作和未来工作。
+2 编程模型 计算接收一组输入键/值对，并产生一组输出键/值对。MapReduce 库的用户将计算表述为两个函数：Map 和 Reduce。</description>
+    </item>
     <item>
       <title>[论文翻译]The Google File System</title>
       <link>https://fireflyyh.top/posts/distributionsystem/gfs/</link>
