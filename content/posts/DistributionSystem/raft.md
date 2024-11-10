@@ -84,6 +84,43 @@ Raft 在许多方面与现有的共识算法相似（最值得注意的是 Oki �
         color: white;
         padding: 12px;
         text-align: center;">
+            State
+        </th>
+        <tr>
+            <th rowspan="3" style="color: #a7001e;">所有服务器上的持久性状态（在响应 RPC 之前更新稳定存储）</th>
+            <th>currentTerm</th>
+            <td>服务器见过的最新任期（首次启动时初始化为 0，单调增加）</td>
+        </tr>
+        <tr>
+            <th>votedFor</th>
+            <td>在当前任期内获得投票的候选者的ID（如果没有则为 null）</td>
+        </tr>
+        <tr>
+            <th>log[]</th>
+            <td>日志条目；每个条目包含状态机命令以及领导者收到条目时的任期（第一个索引为 1）</td>
+        </tr>
+        <tr>
+            <th rowspan="2" style="color: #a7001e;">所有服务器上的易失状态</th>
+            <th>commitIndex</th>
+            <td>已知已提交的最高日志条目的索引（初始化为 0，单调增加）</td>
+        </tr>
+        <tr>
+            <th>lastApplied</th>
+            <td>应用于状态机的最高日志条目的索引（初始化为 0，单调增加）</td>
+        </tr>
+        <tr>
+            <th rowspan="2" style="color: #a7001e;">领导者服务器上的易失状态（选举后重新初始化）</th>
+            <th>nextIndex[]</th>
+            <td>对于每个服务器，发送到该服务器的下一个日志条目的索引（初始化为领导者最后一个日志索引 + 1）</td>
+        </tr>
+        <tr>
+            <th>matchIndex[]</th>
+            <td>对于每个服务器，已知在服务器上复制的最高日志条目的索引（初始化为 0，单调增加）</td>
+        </tr>
+        <th colspan="3" align="center" style="background-color: #285daa;
+        color: white;
+        padding: 12px;
+        text-align: center;">
             AppendEntries RPC
         </th>
         <tr>
@@ -133,6 +170,107 @@ Raft 在许多方面与现有的共识算法相似（最值得注意的是 Oki �
                     <li>附加日志中尚未存在的任何新条目</li>
                     <li>如果 leaderCommit > commitIndex，将 commitIndex 设置为 leaderCommit 和新条目索引的较小值</li>
                 </ol>
+            </td>
+        </tr>
+        <th colspan="3" align="center" style="background-color: #285daa;
+        color: white;
+        padding: 12px;
+        text-align: center;">
+            RequestVote RPC
+        </th>
+        <tr>
+            <td colspan="3" style="color:#1f4899">由候选者调用来收集选票（§5.2）。</td>
+        </tr>
+        <tr>
+            <th rowspan="4" style="color: #a7001e;">参数：</th>
+            <th>term</th>
+            <td>候选者的任期</td>
+        </tr>
+        <tr>
+            <th>candidateID</th>
+            <td>正在请求投票的候选者</td>
+        </tr>
+        <tr>
+            <th>lastLogIndex</th>
+            <td>候选者最后一个日志条目的索引（§5.4）</td>
+        </tr>
+        <tr>
+            <th>lastLogTerm</th>
+            <td>候选者最后一次日志条目的任期（§5.4）</td>
+        </tr>
+        <tr>
+            <th rowspan="2" style="color: #a7001e;">结果：</th>
+            <th>term</th>
+            <td>currentTerm，供候选者自行更新</td>
+        </tr>
+        <tr>
+            <th>voteGranted</th>
+            <td>true 表示候选者获得选票</td>
+        </tr>
+        <tr>
+            <th style="color: #a7001e;">接收者实现：</th>
+            <td colspan="2">
+                <ol>
+                    <li>如果 term < currentTerm 就返回 false</li>
+                    <li>如果 votedFor 为空或为 candidateId，并且候选者的日志至少和接收者一样新，就投票给候选者（§5.2, §5.4）</li>
+                </ol>
+            </td>
+        </tr>
+        <th colspan="3" align="center" style="background-color: #285daa;
+        color: white;
+        padding: 12px;
+        text-align: center;">
+            Rules for Servers
+        </th>
+        <tr>
+            <th style="color: #a7001e;">所有服务器：</th>
+            <td colspan="2">
+                <ul>
+                    <li>如果 commitIndex > lastApplied：增加 lastApplied，将 log[lastApplied] 应用到状态机（§5.3）</li>
+                    <li>如果RPC请求或响应包含的任期 T > currentTerm：设置currentTerm = T，转换为跟随者（§5.1）。</li>
+                </ul>
+            </td>
+        </tr>
+        <tr>
+            <th style="color: #a7001e;">跟随者（§5.2）:</th>
+            <td colspan="2">
+                <ul>
+                    <li>回应候选者和领导者的 RPC</li>
+                    <li>如果选举超时后没有收到来自当前领导者的 AppendEntries RPC 或向候选者授予投票：转换为候选者</li>
+                </ul>
+            </td>
+        </tr>
+        <tr>
+            <th style="color: #a7001e;">候选者（§5.2）:</th>
+            <td colspan="2">
+                <ul>
+                    <li>转换为候选者后，开始选举：</li>
+                    <ul>
+                        <li>增加 currentTerm</li>
+                        <li>为自己投票</li>
+                        <li>重置选举计时器</li>
+                        <li>向所有其他服务器发送 RequestVote RPC</li>
+                    </ul>
+                    <li>如果从大多数服务器收到选票：成为领导者</li>
+                    <li>如果从新领导者收到 AppendEntries RPC：转换为跟随者</li>
+                    <li>如果选举超时：开始新的选举</li>
+                </ul>
+            </td>
+        </tr>
+        <tr>
+            <th style="color: #a7001e;">领导者：</th>
+            <td colspan="2">
+                <ul>
+                    <li>当选后：向每个服务器发送初始的空 AppendEntries RPC（心跳）；在空闲期间重复以防止选举超时（§5.2）</li>
+                    <li>如果从客户端收到命令：将条目附加到本地日志，在条目应用到状态机后响应（§5.3）</li>
+                    <li>如果 lastLogIndex ≥ 跟随者的 nextIndex：发送包含从 nextIndex 开始的日志条目的 AppendEntries RPC</li>
+                    <ul>
+                        <li>如果成功：更新跟随者的 nextIndex 和 matchIndex（§5.3）</li>
+                        <li>如果 AppendEntries 因日志不一致而失败：递减 nextIndex 并重试（§5.3）</li>
+                    </ul>
+                    <li>如果存在一个 N 使得 N > commitIndex，且大多数 matchIndex[i] ≥ N，并且 log[N].term == currentTerm：设置 commitIndex
+                        = N（§5.3，§5.4）。</li>
+                </ul>
             </td>
         </tr>
     </table>
