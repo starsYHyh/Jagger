@@ -2,43 +2,43 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>Signals on Jagger&#39;s Blog</title>
-    <link>http://localhost:45252/tags/signals/</link>
+    <link>https://fireflyyh.top/tags/signals/</link>
     <description>Recent content in Signals on Jagger&#39;s Blog</description>
     <image>
       <title>Jagger&#39;s Blog</title>
-      <url>http://localhost:45252/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</url>
-      <link>http://localhost:45252/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</link>
+      <url>https://fireflyyh.top/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</url>
+      <link>https://fireflyyh.top/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</link>
     </image>
     <generator>Hugo -- 0.129.0</generator>
     <language>en</language>
     <lastBuildDate>Sat, 07 Sep 2024 00:00:00 +0000</lastBuildDate>
-    <atom:link href="http://localhost:45252/tags/signals/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://fireflyyh.top/tags/signals/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>硬件产生的信号</title>
-      <link>http://localhost:45252/posts/tlpi/demo_sigfpe/</link>
+      <link>https://fireflyyh.top/posts/tlpi/demo_sigfpe/</link>
       <pubDate>Sat, 07 Sep 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:45252/posts/tlpi/demo_sigfpe/</guid>
+      <guid>https://fireflyyh.top/posts/tlpi/demo_sigfpe/</guid>
       <description>TLPI 22.4：处理由硬件产生的信号 代码（为网站上获取） 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 #define _GNU_SOURCE /* Get strsignal() declaration from &amp;lt;string.</description>
     </item>
     <item>
       <title>信号处理函数中调用不可重入的函数</title>
-      <link>http://localhost:45252/posts/tlpi/nonreentrant/</link>
+      <link>https://fireflyyh.top/posts/tlpi/nonreentrant/</link>
       <pubDate>Thu, 01 Aug 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:45252/posts/tlpi/nonreentrant/</guid>
+      <guid>https://fireflyyh.top/posts/tlpi/nonreentrant/</guid>
       <description>TLPI 21.1.2: 可重入函数和异步信号安全函数 代码 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 #define _XOPEN_SOURCE 600 #include &amp;lt;unistd.h&amp;gt; #include &amp;lt;signal.h&amp;gt; #include &amp;lt;string.h&amp;gt; #include &amp;lt;crypt.h&amp;gt; #include &amp;#34;tlpi_hdr.h&amp;#34; static char *str2; static int handled = 0; // 设置处理器函数，一旦遇上SIGINT，便对str2进行加密 static void handler(int sig) { crypt(str2, &amp;#34;xx&amp;#34;); handled++; } int main(int argc, char *argv[]) { char *cr1; int callNum, mismatch; struct sigaction sa; if (argc !</description>
     </item>
     <item>
       <title>在备选栈中处理信号</title>
-      <link>http://localhost:45252/posts/tlpi/t_sigaltstack/</link>
+      <link>https://fireflyyh.top/posts/tlpi/t_sigaltstack/</link>
       <pubDate>Wed, 31 Jul 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:45252/posts/tlpi/t_sigaltstack/</guid>
+      <guid>https://fireflyyh.top/posts/tlpi/t_sigaltstack/</guid>
       <description>TLPI 21.3：在备选栈中处理信号：sigaltstack() 代码 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 static void sigsegvHandler(int sig) { int x; // 捕捉信号，并通过局部变量的位置来大致判断为当前函数所分配的空间处于什么位置 printf(&amp;#34;Caught signal %d (%s)\n&amp;#34;, sig, strsignal(sig)); printf(&amp;#34;Top of handler stack near %10p\n&amp;#34;, (void *)&amp;amp;x); // fflush(NULL)的作用是在程序异常终止前确保所有标准输出缓冲区的数据都被写入到相应的输出设备。 fflush(NULL); _exit(EXIT_FAILURE); } static void overflowStack(int callNum) { char a[100000]; // 此类分配数组方式为栈上分配 printf(&amp;#34;Call %4d - top of stack near %10p\n&amp;#34;, callNum, &amp;amp;a[0]); overflowStack(callNum + 1); // 无限递归调用，不断在栈上分配空间，每次分配100000字节以上 } int main(int argc, char *argv[]) { stack_t sigstack; struct sigaction sa; int j; printf(&amp;#34;Top of standard stack is near %10p\n&amp;#34;, (void *)&amp;amp;j); // 分配备用栈并通知内核 // 在堆当中分配备用栈 sigstack.</description>
     </item>
     <item>
       <title>在信号处理器函数中执行非本地跳转</title>
-      <link>http://localhost:45252/posts/tlpi/sigmask_longjmp/</link>
+      <link>https://fireflyyh.top/posts/tlpi/sigmask_longjmp/</link>
       <pubDate>Sat, 27 Jul 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:45252/posts/tlpi/sigmask_longjmp/</guid>
+      <guid>https://fireflyyh.top/posts/tlpi/sigmask_longjmp/</guid>
       <description>TLPI 21.2.1：在信号处理器函数中执行非本地跳转 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 #define _GNU_SOURCE // 添加该定义以正常使用strsignal()、sigaction() #include &amp;lt;string.</description>
     </item>
   </channel>

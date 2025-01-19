@@ -1,3 +1,3 @@
 User-agent: *
 Disallow:
-Sitemap: http://localhost:45252/sitemap.xml
+Sitemap: https://fireflyyh.top/sitemap.xml

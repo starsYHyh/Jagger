@@ -2,22 +2,22 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>笔记 on Jagger&#39;s Blog</title>
-    <link>http://localhost:45252/tags/%E7%AC%94%E8%AE%B0/</link>
+    <link>https://fireflyyh.top/tags/%E7%AC%94%E8%AE%B0/</link>
     <description>Recent content in 笔记 on Jagger&#39;s Blog</description>
     <image>
       <title>Jagger&#39;s Blog</title>
-      <url>http://localhost:45252/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</url>
-      <link>http://localhost:45252/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</link>
+      <url>https://fireflyyh.top/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</url>
+      <link>https://fireflyyh.top/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</link>
     </image>
     <generator>Hugo -- 0.129.0</generator>
     <language>en</language>
     <lastBuildDate>Sat, 18 Jan 2025 00:00:00 +0000</lastBuildDate>
-    <atom:link href="http://localhost:45252/tags/%E7%AC%94%E8%AE%B0/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://fireflyyh.top/tags/%E7%AC%94%E8%AE%B0/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>高级软件工程复习笔记</title>
-      <link>http://localhost:45252/posts/campus/se20204fall/</link>
+      <link>https://fireflyyh.top/posts/campus/se20204fall/</link>
       <pubDate>Sat, 18 Jan 2025 00:00:00 +0000</pubDate>
-      <guid>http://localhost:45252/posts/campus/se20204fall/</guid>
+      <guid>https://fireflyyh.top/posts/campus/se20204fall/</guid>
       <description>软件概述 基本定义 (1) 程序与软件的定义
 程序是由程序设计语言所描述的、能为计算机所理解和处理的一组语句序列。其用程序设计语言（Programming Language）来描述的。程序严格遵循程序设计语言的各项语法和语义规定，应确保程序代码能为程序设计语言的编译器所理解，进而编译生成相应的可运行代码。
 软件是指在计算机系统的支持下，能够完成特定功能与性能的程序、数据和相关文档。文档是记录软件开发活动和阶段性成果、软件配置及变更的阐述性资料。

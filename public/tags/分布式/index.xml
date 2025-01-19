@@ -2,22 +2,22 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>分布式 on Jagger&#39;s Blog</title>
-    <link>http://localhost:45252/tags/%E5%88%86%E5%B8%83%E5%BC%8F/</link>
+    <link>https://fireflyyh.top/tags/%E5%88%86%E5%B8%83%E5%BC%8F/</link>
     <description>Recent content in 分布式 on Jagger&#39;s Blog</description>
     <image>
       <title>Jagger&#39;s Blog</title>
-      <url>http://localhost:45252/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</url>
-      <link>http://localhost:45252/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</link>
+      <url>https://fireflyyh.top/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</url>
+      <link>https://fireflyyh.top/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</link>
     </image>
     <generator>Hugo -- 0.129.0</generator>
     <language>en</language>
     <lastBuildDate>Wed, 06 Nov 2024 00:00:00 +0000</lastBuildDate>
-    <atom:link href="http://localhost:45252/tags/%E5%88%86%E5%B8%83%E5%BC%8F/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://fireflyyh.top/tags/%E5%88%86%E5%B8%83%E5%BC%8F/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>[论文翻译]In Search of an Understandable Consensus Algorithm  (Extended Version)</title>
-      <link>http://localhost:45252/posts/distributionsystem/raft/</link>
+      <link>https://fireflyyh.top/posts/distributionsystem/raft/</link>
       <pubDate>Wed, 06 Nov 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:45252/posts/distributionsystem/raft/</guid>
+      <guid>https://fireflyyh.top/posts/distributionsystem/raft/</guid>
       <description>Diego Ongaro and John Ousterhout Stanford University摘要 Raft 是一种用于管理复制日志的共识算法。它能够产生与(多)Paxos 相同的结果，并且效率与 Paxos 相当，但其结构与 Paxos 不同。这种结构上的差异使得 Raft 比 Paxos 更容易理解，同时也为构建实际系统提供了更好的基础。为了提升可理解性，Raft 将共识的关键要素进行了分离，如领导者选举、日志复制和安全性保证等，并且强化了一致性要求以减少需要考虑的状态数量。用户研究的结果表明，相比 Paxos，学生们更容易掌握 Raft。此外，Raft 还引入了一种新的集群成员变更机制，该机制通过使用重叠的多数派来保证安全性。
 1 引言 共识算法使得一组机器能够作为一个连贯的整体工作，并且能够在部分成员发生故障时继续运行。正因如此，这类算法在构建可靠的大规模软件系统中发挥着关键作用。在过去的十年里，Paxos1 2主导了关于共识算法的讨论：大多数共识算法的实现要么基于 Paxos，要么受到它的影响，而且 Paxos 已经成为向学生教授共识知识的主要载体。
 不幸的是，尽管已经有许多让它变得更容易理解的尝试，Paxos 仍然非常难以理解。此外，它的架构需要进行复杂的改动才能支持实际系统。因此，系统构建者和学生都在与 Paxos 作斗争。
@@ -27,9 +27,9 @@ Raft 在许多方面与现有的共识算法相似（最值得注意的是 Oki �
     </item>
     <item>
       <title>[论文翻译]MapReduce: Simplified Data Processing on Large Clusters</title>
-      <link>http://localhost:45252/posts/distributionsystem/mapreduce/</link>
+      <link>https://fireflyyh.top/posts/distributionsystem/mapreduce/</link>
       <pubDate>Wed, 06 Nov 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:45252/posts/distributionsystem/mapreduce/</guid>
+      <guid>https://fireflyyh.top/posts/distributionsystem/mapreduce/</guid>
       <description>摘要 MapReduce 是一种用于处理和生成大型数据集的编程模型和相关实现。用户指定一个 map 函数来处理键/值对，生成一组中间键/值对，并指定一个 reduce 函数来合并与同一中间键相关的所有中间值。如本文所示，许多现实世界中的任务都可以用这个模型来表达。
 以这种函数式风格编写的程序会自动并行化，并在大型商用机器集群上执行。运行时系统会处理分割输入数据、调度程序在一组机器上的执行、处理机器故障以及管理所需的机器间通信等细节。这样，没有任何并行和分布式系统经验的程序员也能轻松利用大型分布式系统的资源。
 我们的 MapReduce 实现运行在大型商用机器集群上，并且具有高度可扩展性：典型的 MapReduce 计算在数千台机器上处理数 TB 的数据。程序员发现该系统易于使用：数百个 MapReduce 程序已经实现，并且每天在 Google 集群上执行超过一千个 MapReduce 作业。
@@ -41,9 +41,9 @@ Raft 在许多方面与现有的共识算法相似（最值得注意的是 Oki �
     </item>
     <item>
       <title>[论文翻译]The Google File System</title>
-      <link>http://localhost:45252/posts/distributionsystem/gfs/</link>
+      <link>https://fireflyyh.top/posts/distributionsystem/gfs/</link>
       <pubDate>Fri, 25 Oct 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:45252/posts/distributionsystem/gfs/</guid>
+      <guid>https://fireflyyh.top/posts/distributionsystem/gfs/</guid>
       <description>摘要 我们设计并实现了谷歌文件系统，这是一个可扩展的分布式文件系统，适用于大型分布式数据密集型应用。该系统可在廉价的商品硬件上运行，同时提供容错功能，并能为大量客户端提供高聚合性能。
 我们的设计目标与之前的分布式文件系统有许多相同之处，但我们对应用工作负载和技术环境（包括当前和预期环境）的观察结果表明，我们的设计明显偏离了之前的一些文件系统假设。这促使我们重新审视传统的选择，探索完全不同的设计要点。
 文件系统成功地满足了我们的存储需求。它在谷歌内部被广泛部署，作为生成和处理我们的服务所使用的数据以及需要大型数据集的研发工作的存储平台。迄今为止，最大的集群在一千多台机器上的数千个磁盘上提供了数百 TB 的存储空间，并被数百个客户端并发访问。
