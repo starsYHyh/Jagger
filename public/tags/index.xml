@@ -2,106 +2,120 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>Tags on Jagger&#39;s Blog</title>
-    <link>https://fireflyyh.top/tags/</link>
+    <link>http://localhost:45252/tags/</link>
     <description>Recent content in Tags on Jagger&#39;s Blog</description>
     <image>
       <title>Jagger&#39;s Blog</title>
-      <url>https://fireflyyh.top/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</url>
-      <link>https://fireflyyh.top/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</link>
+      <url>http://localhost:45252/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</url>
+      <link>http://localhost:45252/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E</link>
     </image>
     <generator>Hugo -- 0.129.0</generator>
     <language>en</language>
-    <lastBuildDate>Wed, 06 Nov 2024 00:00:00 +0000</lastBuildDate>
-    <atom:link href="https://fireflyyh.top/tags/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 18 Jan 2025 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:45252/tags/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>笔记</title>
+      <link>http://localhost:45252/tags/%E7%AC%94%E8%AE%B0/</link>
+      <pubDate>Sat, 18 Jan 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:45252/tags/%E7%AC%94%E8%AE%B0/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>课程</title>
+      <link>http://localhost:45252/tags/%E8%AF%BE%E7%A8%8B/</link>
+      <pubDate>Sat, 18 Jan 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:45252/tags/%E8%AF%BE%E7%A8%8B/</guid>
+      <description></description>
+    </item>
     <item>
       <title>分布式</title>
-      <link>https://fireflyyh.top/tags/%E5%88%86%E5%B8%83%E5%BC%8F/</link>
+      <link>http://localhost:45252/tags/%E5%88%86%E5%B8%83%E5%BC%8F/</link>
       <pubDate>Wed, 06 Nov 2024 00:00:00 +0000</pubDate>
-      <guid>https://fireflyyh.top/tags/%E5%88%86%E5%B8%83%E5%BC%8F/</guid>
+      <guid>http://localhost:45252/tags/%E5%88%86%E5%B8%83%E5%BC%8F/</guid>
       <description></description>
     </item>
     <item>
       <title>论文</title>
-      <link>https://fireflyyh.top/tags/%E8%AE%BA%E6%96%87/</link>
+      <link>http://localhost:45252/tags/%E8%AE%BA%E6%96%87/</link>
       <pubDate>Wed, 06 Nov 2024 00:00:00 +0000</pubDate>
-      <guid>https://fireflyyh.top/tags/%E8%AE%BA%E6%96%87/</guid>
+      <guid>http://localhost:45252/tags/%E8%AE%BA%E6%96%87/</guid>
       <description></description>
     </item>
     <item>
       <title>TCPL</title>
-      <link>https://fireflyyh.top/tags/tcpl/</link>
+      <link>http://localhost:45252/tags/tcpl/</link>
       <pubDate>Wed, 23 Oct 2024 00:00:00 +0000</pubDate>
-      <guid>https://fireflyyh.top/tags/tcpl/</guid>
+      <guid>http://localhost:45252/tags/tcpl/</guid>
       <description></description>
     </item>
     <item>
       <title>Configuration</title>
-      <link>https://fireflyyh.top/tags/configuration/</link>
+      <link>http://localhost:45252/tags/configuration/</link>
       <pubDate>Sun, 08 Sep 2024 00:00:00 +0000</pubDate>
-      <guid>https://fireflyyh.top/tags/configuration/</guid>
+      <guid>http://localhost:45252/tags/configuration/</guid>
       <description></description>
     </item>
     <item>
       <title>Linux</title>
-      <link>https://fireflyyh.top/tags/linux/</link>
+      <link>http://localhost:45252/tags/linux/</link>
       <pubDate>Sun, 08 Sep 2024 00:00:00 +0000</pubDate>
-      <guid>https://fireflyyh.top/tags/linux/</guid>
+      <guid>http://localhost:45252/tags/linux/</guid>
       <description></description>
     </item>
     <item>
       <title>Signals</title>
-      <link>https://fireflyyh.top/tags/signals/</link>
+      <link>http://localhost:45252/tags/signals/</link>
       <pubDate>Sat, 07 Sep 2024 00:00:00 +0000</pubDate>
-      <guid>https://fireflyyh.top/tags/signals/</guid>
+      <guid>http://localhost:45252/tags/signals/</guid>
       <description></description>
     </item>
     <item>
       <title>TLPI</title>
-      <link>https://fireflyyh.top/tags/tlpi/</link>
+      <link>http://localhost:45252/tags/tlpi/</link>
       <pubDate>Sat, 07 Sep 2024 00:00:00 +0000</pubDate>
-      <guid>https://fireflyyh.top/tags/tlpi/</guid>
+      <guid>http://localhost:45252/tags/tlpi/</guid>
       <description></description>
     </item>
     <item>
       <title>Tcpcliserv</title>
-      <link>https://fireflyyh.top/tags/tcpcliserv/</link>
+      <link>http://localhost:45252/tags/tcpcliserv/</link>
       <pubDate>Wed, 31 Jul 2024 00:00:00 +0000</pubDate>
-      <guid>https://fireflyyh.top/tags/tcpcliserv/</guid>
+      <guid>http://localhost:45252/tags/tcpcliserv/</guid>
       <description></description>
     </item>
     <item>
       <title>UNP</title>
-      <link>https://fireflyyh.top/tags/unp/</link>
+      <link>http://localhost:45252/tags/unp/</link>
       <pubDate>Wed, 31 Jul 2024 00:00:00 +0000</pubDate>
-      <guid>https://fireflyyh.top/tags/unp/</guid>
+      <guid>http://localhost:45252/tags/unp/</guid>
       <description></description>
     </item>
     <item>
       <title>BLOG</title>
-      <link>https://fireflyyh.top/tags/blog/</link>
+      <link>http://localhost:45252/tags/blog/</link>
       <pubDate>Sun, 28 Jul 2024 00:00:00 +0000</pubDate>
-      <guid>https://fireflyyh.top/tags/blog/</guid>
+      <guid>http://localhost:45252/tags/blog/</guid>
       <description></description>
     </item>
     <item>
       <title>408</title>
-      <link>https://fireflyyh.top/tags/408/</link>
+      <link>http://localhost:45252/tags/408/</link>
       <pubDate>Sun, 08 Oct 2023 00:00:00 +0000</pubDate>
-      <guid>https://fireflyyh.top/tags/408/</guid>
+      <guid>http://localhost:45252/tags/408/</guid>
       <description></description>
     </item>
     <item>
       <title>Test</title>
-      <link>https://fireflyyh.top/tags/test/</link>
+      <link>http://localhost:45252/tags/test/</link>
       <pubDate>Tue, 15 Sep 2020 11:30:03 +0000</pubDate>
-      <guid>https://fireflyyh.top/tags/test/</guid>
+      <guid>http://localhost:45252/tags/test/</guid>
       <description></description>
     </item>
     <item>
       <title>Log</title>
-      <link>https://fireflyyh.top/tags/log/</link>
+      <link>http://localhost:45252/tags/log/</link>
       <pubDate>Mon, 09 Sep 2002 07:00:34 +0800</pubDate>
-      <guid>https://fireflyyh.top/tags/log/</guid>
+      <guid>http://localhost:45252/tags/log/</guid>
       <description></description>
     </item>
   </channel>
