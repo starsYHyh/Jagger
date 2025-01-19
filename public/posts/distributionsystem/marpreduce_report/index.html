@@ -1,0 +1,931 @@
+<!doctype html><html lang=en dir=auto><head><meta charset=utf-8><meta http-equiv=X-UA-Compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><meta name=robots content="index, follow"><title>MapReduce实验报告 | Jagger's Blog</title>
+<meta name=keywords content="分布式,实验报告"><meta name=description content="原理 具体可以看翻译的论文
+系统架构 MapReduce的整体系统架构图如上图所示。总体上可以分为三个部分：Client、Master、Worker
+在Client中，编写的MapReduce程序提交到master端，用户可通过Client提供的一些接口查看作业运行状态。
+在Master中，又分为两个部分：
+Task Scheduler负责调度mapreduce作业，它将作业分解为多个Map任务和Reduce任务，然后将这些任务分配给集群中的不同节点来处理。 JobTracker负责它监控任务的执行状态，负责处理来自worker的数据，并负责将数据转发与存储。同时也负责任务的失败处理。 在Worker中，分为了三个部分：
+TaskTracker任务： 分布在集群各个节点上的工作节点，负责执行由JobTracker分配的Map和Reduce任务。每个TaskTracker节点都可以并行执行多个任务。TaskTracker会将任务的执行进度和状态报告给mastre中的JobTracker。
+Map任务： Map任务是MapReduce处理的第一阶段。输入数据被分为多个分片，每个分片被分配给一个Map任务。Map任务处理数据片段，将其转化为键值对<key, value>的形式。然后，它们将这些键值存储到一定位置并告知master，以供后续的Reduce任务使用。
+Reduce任务： Reduce任务是MapReduce处理的第二阶段。Reduce任务负责处理由Map任务产生的中间键值对。它将相同键的数据进行汇总和归并处理，然后输出最终的计算结果。通常，Reduce任务会聚合、筛选或合并相同键的数据，实现对Map结果的进一步处理。
+任务流程 流程图如上图所示，关键流程有以下几步：
+用户程序中的MapReduce库首先将输入文件划分为M个分片，通常每个分片为16MB到64MB（用户可通过可选参数控制）。随后，库会在集群中的机器上启动程序的一些副本。 这些程序的副本中，有一份很特殊，它是master副本。其他的副本是被master分配了任务的worker副本。总计要分配 M个map任务和R个reduce任务。master选取闲置的worker并为每个选取的worker分配map或reduce任务。 被分配map任务的worker从输入数据分片中读取内容。其解析输入数据中的键值对，并将每个键值对传给用户定义的map函数。map函数输出的中间键值对在内存中缓存。 内存中缓存的键值对会定期地写入本地磁盘，写入的数据会被分区函数划分为R个区域。这些在磁盘中缓存的键值对的位置会被发送给master，master会将这些位置信息进一步传递给reduce worker。 当master通知reduce worker中间键值对的位置信息后，reduce worker会通过RPC的方式从map worker的本地磁盘中读取缓存的数据。当reduce worker读取完所有中间数据后，它会对中间数据按照键进行排序，以便将所有键相同的键值对分为一组。因为通常来说，需对键不同的数据会被映射到同一个reduce任务中，所以需要对数据排序。如果中间数据总量过大以至于无法放入内存中，则会使用外排序算法。 reduce worker遍历每一个遇到的中间键值对的，它会将键和该键对应的一系列值传递给用户定义的reduce函数。reduce函数的输出会被追加到该reduce分区的最终输出文件中。 当所有的map和reduce任务都执行完毕后，master会唤醒用户程序。此时，调用MapReduce的调应用序会返回到用户代码中。 总览 本次实验最终实现的思路，其时序图如下：
+实验的类图如下：
+classDiagram class Coordinator { +state: TaskType +tasks: map[TaskType][]Task +mapping: map[int]int +reducing: map[int]int +GetTask(args: GetTaskArgs, reply: *GetTaskReply) error +WorkerComplete(args: *GetTaskArgs, reply: *GetTaskReply) error } class Worker { +doMap(mapf: func(string, string) []KeyValue, reply: *GetTaskReply) bool +doReduce(reducef: func(string, []string) string, reply: *GetTaskReply) bool +merge(taskId: int, mMap: int) []KeyValue +devide(kva: []KeyValue, taskId: int, nReduce: int) bool } class Task { +TaskId: int +TaskType: TaskType +TaskState: TaskState +startTime: time."><meta name=author content="Jagger"><link rel=canonical href=https://fireflyyh.top/posts/distributionsystem/marpreduce_report/><link crossorigin=anonymous href=/assets/css/stylesheet.85106b68d21097b36df07bae454e1c50c6b1bdee98f9081be69e9968653bd3a0.css integrity="sha256-hRBraNIQl7Nt8HuuRU4cUMaxve6Y+Qgb5p6ZaGU706A=" rel="preload stylesheet" as=style><link rel=icon href=https://fireflyyh.top/img/yuan.jpg><link rel=icon type=image/png sizes=16x16 href=https://fireflyyh.top/%3Clink%20/%20abs%20url%3E><link rel=icon type=image/png sizes=32x32 href=https://fireflyyh.top/%3Clink%20/%20abs%20url%3E><link rel=apple-touch-icon href=https://fireflyyh.top/%3Clink%20/%20abs%20url%3E><link rel=mask-icon href=https://fireflyyh.top/%3Clink%20/%20abs%20url%3E><meta name=theme-color content="#2e2e33"><meta name=msapplication-TileColor content="#2e2e33"><link rel=alternate hreflang=en href=https://fireflyyh.top/posts/distributionsystem/marpreduce_report/><noscript><style>#theme-toggle,.top-link{display:none}</style><style>@media(prefers-color-scheme:dark){:root{--theme:rgb(29, 30, 32);--entry:rgb(46, 46, 51);--primary:rgb(218, 218, 219);--secondary:rgb(155, 156, 157);--tertiary:rgb(65, 66, 68);--content:rgb(196, 196, 197);--code-block-bg:rgb(46, 46, 51);--code-bg:rgb(55, 56, 62);--border:rgb(51, 51, 51)}.list{background:var(--theme)}.list:not(.dark)::-webkit-scrollbar-track{background:0 0}.list:not(.dark)::-webkit-scrollbar-thumb{border-color:var(--theme)}}</style></noscript><script>var _hmt=_hmt||[];(function(){var e,t=document.createElement("script");t.src="https://hm.baidu.com/hm.js?87f1888ba5320e03987ecde7525fde2d",e=document.getElementsByTagName("script")[0],e.parentNode.insertBefore(t,e)})()</script><script type=text/javascript async src="https://cdn.bootcss.com/mathjax/2.7.3/MathJax.js?config=TeX-AMS-MML_HTMLorMML">MathJax.Hub.Config({tex2jax:{inlineMath:[["$","$"],["\\(","\\)"]],displayMath:[["$$","$$"],["[[","]]"]],processEscapes:!0,processEnvironments:!0,skipTags:["script","noscript","style","textarea","pre"],TeX:{equationNumbers:{autoNumber:"AMS"},extensions:["AMSmath.js","AMSsymbols.js"]}}}),MathJax.Hub.Queue(function(){var e,t=MathJax.Hub.getAllJax();for(e=0;e<t.length;e+=1)t[e].SourceElement().parentNode.className+=" has-jax"})</script><style>code.has-jax{font:inherit;font-size:100%;background:inherit;border:inherit;color:#515151}</style><script async src="https://www.googletagmanager.com/gtag/js?id=G-Y30PKHXBN4"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-Y30PKHXBN4")</script><meta property="og:title" content="MapReduce实验报告"><meta property="og:description" content="原理 具体可以看翻译的论文
+系统架构 MapReduce的整体系统架构图如上图所示。总体上可以分为三个部分：Client、Master、Worker
+在Client中，编写的MapReduce程序提交到master端，用户可通过Client提供的一些接口查看作业运行状态。
+在Master中，又分为两个部分：
+Task Scheduler负责调度mapreduce作业，它将作业分解为多个Map任务和Reduce任务，然后将这些任务分配给集群中的不同节点来处理。 JobTracker负责它监控任务的执行状态，负责处理来自worker的数据，并负责将数据转发与存储。同时也负责任务的失败处理。 在Worker中，分为了三个部分：
+TaskTracker任务： 分布在集群各个节点上的工作节点，负责执行由JobTracker分配的Map和Reduce任务。每个TaskTracker节点都可以并行执行多个任务。TaskTracker会将任务的执行进度和状态报告给mastre中的JobTracker。
+Map任务： Map任务是MapReduce处理的第一阶段。输入数据被分为多个分片，每个分片被分配给一个Map任务。Map任务处理数据片段，将其转化为键值对<key, value>的形式。然后，它们将这些键值存储到一定位置并告知master，以供后续的Reduce任务使用。
+Reduce任务： Reduce任务是MapReduce处理的第二阶段。Reduce任务负责处理由Map任务产生的中间键值对。它将相同键的数据进行汇总和归并处理，然后输出最终的计算结果。通常，Reduce任务会聚合、筛选或合并相同键的数据，实现对Map结果的进一步处理。
+任务流程 流程图如上图所示，关键流程有以下几步：
+用户程序中的MapReduce库首先将输入文件划分为M个分片，通常每个分片为16MB到64MB（用户可通过可选参数控制）。随后，库会在集群中的机器上启动程序的一些副本。 这些程序的副本中，有一份很特殊，它是master副本。其他的副本是被master分配了任务的worker副本。总计要分配 M个map任务和R个reduce任务。master选取闲置的worker并为每个选取的worker分配map或reduce任务。 被分配map任务的worker从输入数据分片中读取内容。其解析输入数据中的键值对，并将每个键值对传给用户定义的map函数。map函数输出的中间键值对在内存中缓存。 内存中缓存的键值对会定期地写入本地磁盘，写入的数据会被分区函数划分为R个区域。这些在磁盘中缓存的键值对的位置会被发送给master，master会将这些位置信息进一步传递给reduce worker。 当master通知reduce worker中间键值对的位置信息后，reduce worker会通过RPC的方式从map worker的本地磁盘中读取缓存的数据。当reduce worker读取完所有中间数据后，它会对中间数据按照键进行排序，以便将所有键相同的键值对分为一组。因为通常来说，需对键不同的数据会被映射到同一个reduce任务中，所以需要对数据排序。如果中间数据总量过大以至于无法放入内存中，则会使用外排序算法。 reduce worker遍历每一个遇到的中间键值对的，它会将键和该键对应的一系列值传递给用户定义的reduce函数。reduce函数的输出会被追加到该reduce分区的最终输出文件中。 当所有的map和reduce任务都执行完毕后，master会唤醒用户程序。此时，调用MapReduce的调应用序会返回到用户代码中。 总览 本次实验最终实现的思路，其时序图如下：
+实验的类图如下：
+classDiagram class Coordinator { +state: TaskType +tasks: map[TaskType][]Task +mapping: map[int]int +reducing: map[int]int +GetTask(args: GetTaskArgs, reply: *GetTaskReply) error +WorkerComplete(args: *GetTaskArgs, reply: *GetTaskReply) error } class Worker { +doMap(mapf: func(string, string) []KeyValue, reply: *GetTaskReply) bool +doReduce(reducef: func(string, []string) string, reply: *GetTaskReply) bool +merge(taskId: int, mMap: int) []KeyValue +devide(kva: []KeyValue, taskId: int, nReduce: int) bool } class Task { +TaskId: int +TaskType: TaskType +TaskState: TaskState +startTime: time."><meta property="og:type" content="article"><meta property="og:url" content="https://fireflyyh.top/posts/distributionsystem/marpreduce_report/"><meta property="og:image" content="https://fireflyyh.top/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E"><meta property="article:section" content="posts"><meta property="article:published_time" content="2024-12-22T00:00:00+00:00"><meta property="article:modified_time" content="2024-12-22T00:00:00+00:00"><meta property="og:site_name" content="Jagger's Blog"><meta name=twitter:card content="summary_large_image"><meta name=twitter:image content="https://fireflyyh.top/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E"><meta name=twitter:title content="MapReduce实验报告"><meta name=twitter:description content="原理 具体可以看翻译的论文
+系统架构 MapReduce的整体系统架构图如上图所示。总体上可以分为三个部分：Client、Master、Worker
+在Client中，编写的MapReduce程序提交到master端，用户可通过Client提供的一些接口查看作业运行状态。
+在Master中，又分为两个部分：
+Task Scheduler负责调度mapreduce作业，它将作业分解为多个Map任务和Reduce任务，然后将这些任务分配给集群中的不同节点来处理。 JobTracker负责它监控任务的执行状态，负责处理来自worker的数据，并负责将数据转发与存储。同时也负责任务的失败处理。 在Worker中，分为了三个部分：
+TaskTracker任务： 分布在集群各个节点上的工作节点，负责执行由JobTracker分配的Map和Reduce任务。每个TaskTracker节点都可以并行执行多个任务。TaskTracker会将任务的执行进度和状态报告给mastre中的JobTracker。
+Map任务： Map任务是MapReduce处理的第一阶段。输入数据被分为多个分片，每个分片被分配给一个Map任务。Map任务处理数据片段，将其转化为键值对<key, value>的形式。然后，它们将这些键值存储到一定位置并告知master，以供后续的Reduce任务使用。
+Reduce任务： Reduce任务是MapReduce处理的第二阶段。Reduce任务负责处理由Map任务产生的中间键值对。它将相同键的数据进行汇总和归并处理，然后输出最终的计算结果。通常，Reduce任务会聚合、筛选或合并相同键的数据，实现对Map结果的进一步处理。
+任务流程 流程图如上图所示，关键流程有以下几步：
+用户程序中的MapReduce库首先将输入文件划分为M个分片，通常每个分片为16MB到64MB（用户可通过可选参数控制）。随后，库会在集群中的机器上启动程序的一些副本。 这些程序的副本中，有一份很特殊，它是master副本。其他的副本是被master分配了任务的worker副本。总计要分配 M个map任务和R个reduce任务。master选取闲置的worker并为每个选取的worker分配map或reduce任务。 被分配map任务的worker从输入数据分片中读取内容。其解析输入数据中的键值对，并将每个键值对传给用户定义的map函数。map函数输出的中间键值对在内存中缓存。 内存中缓存的键值对会定期地写入本地磁盘，写入的数据会被分区函数划分为R个区域。这些在磁盘中缓存的键值对的位置会被发送给master，master会将这些位置信息进一步传递给reduce worker。 当master通知reduce worker中间键值对的位置信息后，reduce worker会通过RPC的方式从map worker的本地磁盘中读取缓存的数据。当reduce worker读取完所有中间数据后，它会对中间数据按照键进行排序，以便将所有键相同的键值对分为一组。因为通常来说，需对键不同的数据会被映射到同一个reduce任务中，所以需要对数据排序。如果中间数据总量过大以至于无法放入内存中，则会使用外排序算法。 reduce worker遍历每一个遇到的中间键值对的，它会将键和该键对应的一系列值传递给用户定义的reduce函数。reduce函数的输出会被追加到该reduce分区的最终输出文件中。 当所有的map和reduce任务都执行完毕后，master会唤醒用户程序。此时，调用MapReduce的调应用序会返回到用户代码中。 总览 本次实验最终实现的思路，其时序图如下：
+实验的类图如下：
+classDiagram class Coordinator { +state: TaskType +tasks: map[TaskType][]Task +mapping: map[int]int +reducing: map[int]int +GetTask(args: GetTaskArgs, reply: *GetTaskReply) error +WorkerComplete(args: *GetTaskArgs, reply: *GetTaskReply) error } class Worker { +doMap(mapf: func(string, string) []KeyValue, reply: *GetTaskReply) bool +doReduce(reducef: func(string, []string) string, reply: *GetTaskReply) bool +merge(taskId: int, mMap: int) []KeyValue +devide(kva: []KeyValue, taskId: int, nReduce: int) bool } class Task { +TaskId: int +TaskType: TaskType +TaskState: TaskState +startTime: time."><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Posts","item":"https://fireflyyh.top/posts/"},{"@type":"ListItem","position":2,"name":"MapReduce实验报告","item":"https://fireflyyh.top/posts/distributionsystem/marpreduce_report/"}]}</script><script type=application/ld+json>{"@context":"https://schema.org","@type":"BlogPosting","headline":"MapReduce实验报告","name":"MapReduce实验报告","description":"原理 具体可以看翻译的论文\n系统架构 MapReduce的整体系统架构图如上图所示。总体上可以分为三个部分：Client、Master、Worker\n在Client中，编写的MapReduce程序提交到master端，用户可通过Client提供的一些接口查看作业运行状态。\n在Master中，又分为两个部分：\nTask Scheduler负责调度mapreduce作业，它将作业分解为多个Map任务和Reduce任务，然后将这些任务分配给集群中的不同节点来处理。 JobTracker负责它监控任务的执行状态，负责处理来自worker的数据，并负责将数据转发与存储。同时也负责任务的失败处理。 在Worker中，分为了三个部分：\nTaskTracker任务： 分布在集群各个节点上的工作节点，负责执行由JobTracker分配的Map和Reduce任务。每个TaskTracker节点都可以并行执行多个任务。TaskTracker会将任务的执行进度和状态报告给mastre中的JobTracker。\nMap任务： Map任务是MapReduce处理的第一阶段。输入数据被分为多个分片，每个分片被分配给一个Map任务。Map任务处理数据片段，将其转化为键值对\u0026lt;key, value\u0026gt;的形式。然后，它们将这些键值存储到一定位置并告知master，以供后续的Reduce任务使用。\nReduce任务： Reduce任务是MapReduce处理的第二阶段。Reduce任务负责处理由Map任务产生的中间键值对。它将相同键的数据进行汇总和归并处理，然后输出最终的计算结果。通常，Reduce任务会聚合、筛选或合并相同键的数据，实现对Map结果的进一步处理。\n任务流程 流程图如上图所示，关键流程有以下几步：\n用户程序中的MapReduce库首先将输入文件划分为M个分片，通常每个分片为16MB到64MB（用户可通过可选参数控制）。随后，库会在集群中的机器上启动程序的一些副本。 这些程序的副本中，有一份很特殊，它是master副本。其他的副本是被master分配了任务的worker副本。总计要分配 M个map任务和R个reduce任务。master选取闲置的worker并为每个选取的worker分配map或reduce任务。 被分配map任务的worker从输入数据分片中读取内容。其解析输入数据中的键值对，并将每个键值对传给用户定义的map函数。map函数输出的中间键值对在内存中缓存。 内存中缓存的键值对会定期地写入本地磁盘，写入的数据会被分区函数划分为R个区域。这些在磁盘中缓存的键值对的位置会被发送给master，master会将这些位置信息进一步传递给reduce worker。 当master通知reduce worker中间键值对的位置信息后，reduce worker会通过RPC的方式从map worker的本地磁盘中读取缓存的数据。当reduce worker读取完所有中间数据后，它会对中间数据按照键进行排序，以便将所有键相同的键值对分为一组。因为通常来说，需对键不同的数据会被映射到同一个reduce任务中，所以需要对数据排序。如果中间数据总量过大以至于无法放入内存中，则会使用外排序算法。 reduce worker遍历每一个遇到的中间键值对的，它会将键和该键对应的一系列值传递给用户定义的reduce函数。reduce函数的输出会被追加到该reduce分区的最终输出文件中。 当所有的map和reduce任务都执行完毕后，master会唤醒用户程序。此时，调用MapReduce的调应用序会返回到用户代码中。 总览 本次实验最终实现的思路，其时序图如下：\n实验的类图如下：\nclassDiagram class Coordinator { +state: TaskType +tasks: map[TaskType][]Task +mapping: map[int]int +reducing: map[int]int +GetTask(args: GetTaskArgs, reply: *GetTaskReply) error +WorkerComplete(args: *GetTaskArgs, reply: *GetTaskReply) error } class Worker { +doMap(mapf: func(string, string) []KeyValue, reply: *GetTaskReply) bool +doReduce(reducef: func(string, []string) string, reply: *GetTaskReply) bool +merge(taskId: int, mMap: int) []KeyValue +devide(kva: []KeyValue, taskId: int, nReduce: int) bool } class Task { +TaskId: int +TaskType: TaskType +TaskState: TaskState +startTime: time.","keywords":["分布式","实验报告"],"articleBody":"原理 具体可以看翻译的论文\n系统架构 MapReduce的整体系统架构图如上图所示。总体上可以分为三个部分：Client、Master、Worker\n在Client中，编写的MapReduce程序提交到master端，用户可通过Client提供的一些接口查看作业运行状态。\n在Master中，又分为两个部分：\nTask Scheduler负责调度mapreduce作业，它将作业分解为多个Map任务和Reduce任务，然后将这些任务分配给集群中的不同节点来处理。 JobTracker负责它监控任务的执行状态，负责处理来自worker的数据，并负责将数据转发与存储。同时也负责任务的失败处理。 在Worker中，分为了三个部分：\nTaskTracker任务： 分布在集群各个节点上的工作节点，负责执行由JobTracker分配的Map和Reduce任务。每个TaskTracker节点都可以并行执行多个任务。TaskTracker会将任务的执行进度和状态报告给mastre中的JobTracker。\nMap任务： Map任务是MapReduce处理的第一阶段。输入数据被分为多个分片，每个分片被分配给一个Map任务。Map任务处理数据片段，将其转化为键值对的形式。然后，它们将这些键值存储到一定位置并告知master，以供后续的Reduce任务使用。\nReduce任务： Reduce任务是MapReduce处理的第二阶段。Reduce任务负责处理由Map任务产生的中间键值对。它将相同键的数据进行汇总和归并处理，然后输出最终的计算结果。通常，Reduce任务会聚合、筛选或合并相同键的数据，实现对Map结果的进一步处理。\n任务流程 流程图如上图所示，关键流程有以下几步：\n用户程序中的MapReduce库首先将输入文件划分为M个分片，通常每个分片为16MB到64MB（用户可通过可选参数控制）。随后，库会在集群中的机器上启动程序的一些副本。 这些程序的副本中，有一份很特殊，它是master副本。其他的副本是被master分配了任务的worker副本。总计要分配 M个map任务和R个reduce任务。master选取闲置的worker并为每个选取的worker分配map或reduce任务。 被分配map任务的worker从输入数据分片中读取内容。其解析输入数据中的键值对，并将每个键值对传给用户定义的map函数。map函数输出的中间键值对在内存中缓存。 内存中缓存的键值对会定期地写入本地磁盘，写入的数据会被分区函数划分为R个区域。这些在磁盘中缓存的键值对的位置会被发送给master，master会将这些位置信息进一步传递给reduce worker。 当master通知reduce worker中间键值对的位置信息后，reduce worker会通过RPC的方式从map worker的本地磁盘中读取缓存的数据。当reduce worker读取完所有中间数据后，它会对中间数据按照键进行排序，以便将所有键相同的键值对分为一组。因为通常来说，需对键不同的数据会被映射到同一个reduce任务中，所以需要对数据排序。如果中间数据总量过大以至于无法放入内存中，则会使用外排序算法。 reduce worker遍历每一个遇到的中间键值对的，它会将键和该键对应的一系列值传递给用户定义的reduce函数。reduce函数的输出会被追加到该reduce分区的最终输出文件中。 当所有的map和reduce任务都执行完毕后，master会唤醒用户程序。此时，调用MapReduce的调应用序会返回到用户代码中。 总览 本次实验最终实现的思路，其时序图如下：\n实验的类图如下：\nclassDiagram class Coordinator { +state: TaskType +tasks: map[TaskType][]Task +mapping: map[int]int +reducing: map[int]int +GetTask(args: GetTaskArgs, reply: *GetTaskReply) error +WorkerComplete(args: *GetTaskArgs, reply: *GetTaskReply) error } class Worker { +doMap(mapf: func(string, string) []KeyValue, reply: *GetTaskReply) bool +doReduce(reducef: func(string, []string) string, reply: *GetTaskReply) bool +merge(taskId: int, mMap: int) []KeyValue +devide(kva: []KeyValue, taskId: int, nReduce: int) bool } class Task { +TaskId: int +TaskType: TaskType +TaskState: TaskState +startTime: time.Time +FileName: string +Content: string +NReduce: int } class KeyValue { +Key: string +Value: string } Coordinator --\u003e Task : 管理 Worker --\u003e Task : 执行 Worker --\u003e KeyValue : 生成/处理 Task --\u003e KeyValue : 包含 实现过程 RPC 为了使得Worker和Master之间进行调用，首先要对他们之间进行沟通的内容进行规定，定义若干结构体于rpc.go文件中。\n1 2 3 4 5 6 7 8 9 10 type GetTaskArgs struct { WorkerId int // Worker ID TaskType Type // Task Type } type GetTaskReply struct { Task Task // 任务 FileName string // 文件名，提供给worker中的mapf和reducef使用 Content string // 文件内容，提供给worker中的mapf和reducef使用 } GetTaskArgs中的WorkerId部分用于标记Worker，在单机系统中，我使用进程号来作为一个WorkerId。GetTaskReply包含三个部分：\nTask是一个结构体，用来存储任务元数据。\nFilename用来记录文件名，在map和reduce任务中，其起到不同的作用。\nContent用来存储文件中的具体内容。在map任务中，Filename用来记录输入文件名，并将文件内容存放到content中。而在reduce任务中，Filename用来记录输出文件名，以供reduce任务将结果存放到指定的文件中。\nWorker 在本实验中，worker.go 文件实现了 MapReduce 框架中的 Worker 组件，负责执行 Map 和 Reduce 任务，并与 Coordinator 进行通信以获取任务和报告完成状态。其主要分为下面几个部分：\n申请任务 当Worker空闲时，需要不断地向Coordinator申请任务，具体的代码如下：\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 // 初始化请求参数 args := GetTaskArgs{WorkerId: os.Getpid()} reply := GetTaskReply{} // 向Coordinator发送申请 CallGetTask(\u0026args, \u0026reply) taskType := reply.Task.TaskType // 如果接收到的任务类型为Map或Reduce，则说明要进行具体的处理 if taskType == MapType || taskType == ReduceType { var completed bool if taskType == MapType { completed = doMap(mapf, \u0026reply) } else { completed = doReduce(reducef, \u0026reply) } // 如果任务完成，则要向对方发送任务完成的通知，方便后续处理 if completed { args = GetTaskArgs{WorkerId: os.Getpid(), TaskType: taskType} reply = GetTaskReply{} CallWorkerComplete(\u0026args, \u0026reply) } else { // 如果未能完成任务，则表示处理失败 Debug(dError, \"failed!\\n\") } } else if taskType == Wait { // 如果master要求本worker执行wait，则等待一段时间后再去请求任务 time.Sleep(1000 * time.Millisecond) } else if taskType == Done { // 如果master要求本worker执行done，则表示所有任务已经完成 Debug(dInfo, \"All tasks are completed\\n\") return } 结构体与排序接口 1 2 3 4 5 6 7 8 9 10 type KeyValue struct { Key string Value string } type ByKey []KeyValue func (a ByKey) Len() int { return len(a) } func (a ByKey) Swap(i, j int) { a[i], a[j] = a[j], a[i] } func (a ByKey) Less(i, j int) bool { return a[i].Key \u003c a[j].Key } KeyValue 结构体用于存储键值对，是 Map 和 Reduce 任务之间传递数据的基本单元。Key是一个单词，而Value是其出现的次数，在本实验中，若在一段内容中，一个单词word出现了5次，则建立5个元素，它们的内容都为key = word \u0026\u0026 value = 1直至进入到reduce阶段。 而ByKey排序实现了sort.Interface接口，用于对 KeyValue 切片按键进行排序，以便在 Reduce 阶段聚合同一键的值。\n哈希函数 1 2 3 4 5 func ihash(key string) int { h := fnv.New32a() h.Write([]byte(key)) return int(h.Sum32() \u0026 0x7fffffff) } 使用 ihash(key) % NReduce 选择每个 KeyValue由 Map 发出的 Reduce 任务编号。例如，如果 NReduce是 10，那么 ihash(key) 的结果将是 0 到 9 之间的整数。即，将 key 映射到特定的 reduce 桶中，例如，文档可能有 100 个不同的单词，但是只有 10 个 reduce 桶，且确保同一个键总是被分配到相同的 reduce 桶。\nMap任务 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 func devide(kva []KeyValue, taskId int, nReduce int) bool { files := make([]*os.File, nReduce) encoders := make([]*json.Encoder, nReduce) // 创造nReduce个文件 for i := 0; i \u003c nReduce; i++ { mrOutName := fmt.Sprintf(rootPath+\"/intermediate/mr-out-%d-%d\", taskId, i) file, err := os.Create(mrOutName) if err != nil { log.Fatalf(\"cannot create %v\", mrOutName) return false } files[i] = file encoders[i] = json.NewEncoder(file) } // 将kv对写入JSON文件 for _, kv := range kva { reduceNo := ihash(kv.Key) % nReduce if err := encoders[reduceNo].Encode(\u0026kv); err != nil { log.Fatalf(\"cannot encode %v\", kv) return false } } for _, file := range files { file.Close() } return true } func doMap(mapf func(string, string) []KeyValue, reply *GetTaskReply) bool { kva := mapf(reply.FileName, reply.Content) return devide(kva, reply.Task.TaskId, reply.Task.NReduce) } doMap()函数执行 Map 任务，调用用户定义的mapf函数处理输入文件内容，并将生成的键值对分配到 Reduce 桶中。devide函数将 Map 阶段生成的键值对kva分配到nReduce个 Reduce 桶中。具体步骤包括：\n计算每个键的哈希值并确定对应的 Reduce 编号。 根据任务 ID 和 Reduce 编号构建中间文件名，文件名格式为mr-out-taskId-reduceNo（taskId为该map任务的ID，reduceNo为上一步确认的Reduce编号）。 检查中间文件是否存在，若存在则追加写入，否则创建新文件。 处理文件操作中的潜在错误。 %%{init: {'flowchart': {'curve': 'basis'}}}%% graph LR; A(开始) --\u003e B[/输入原始文件内容/]; B --\u003e C[\"调用mapf函数 生成KeyValue列表(kva)\"]; C --\u003e E[遍历kva 中的每个KeyValue]; %% devide函数内部逻辑 %% 添加一些额外的说明 subgraph \"devide函数\" E --\u003e G[\"计算reduce桶编号 (reduceNo)\"]; G --\u003e K[向文件mr-out-taskId -reduceNo 写入KeyValue对]; end K --\u003e N[返回true, 表示map任务完成]; N --\u003e O(结束); Reduce任务 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 // 将mr-X-Y文件中的内容读取到Intermediate中 func merge(taskId int, mMap int) []KeyValue { var intermediate []KeyValue // 读取所有map任务的输出文件 for i := 0; i \u003c mMap; i++ { mrOutName := fmt.Sprintf(rootPath+\"/intermediate/mr-out-%d-%d\", i, taskId) file, err := os.Open(mrOutName) if errors.Is(err, os.ErrNotExist) { continue } if err != nil { log.Fatalf(\"cannot open %v\", mrOutName) return nil } // 读取文件内容，解析为KeyValue dec := json.NewDecoder(file) for { var kv KeyValue if err := dec.Decode(\u0026kv); err != nil { break } intermediate = append(intermediate, kv) } file.Close() } return intermediate } func doReduce(reducef func(string, []string) string, reply *GetTaskReply) bool { // 将mr-X-Y文件中的内容读取到Intermediate中 intermediate := merge(reply.Task.TaskId, reply.Task.MMap) // 下面的代码与mrsequential.go中的代码基本一样，只需要修改输出文件 // 对中间数据根据key进行排序 sort.Sort(ByKey(intermediate)) // 创建输出文件 oname := rootPath + \"/res/mr-out-\" + strconv.Itoa(reply.Task.TaskId) ofile, err := os.Create(oname) if err != nil { log.Fatalf(\"cannot create %v\", oname) return false } defer ofile.Close() i := 0 for i \u003c len(intermediate) { j := i + 1 for j \u003c len(intermediate) \u0026\u0026 intermediate[j].Key == intermediate[i].Key { j++ } // values是一个字符串切片，存储相同key的所有value values := []string{} for k := i; k \u003c j; k++ { values = append(values, intermediate[k].Value) } // 在此时，values是[\"1\", \"1\", \"1\", ...]，1的个数就是单词出现的次数 output := reducef(intermediate[i].Key, values) fmt.Fprintf(ofile, \"%v %v\\n\", intermediate[i].Key, output) i = j } return true } doReduce()函数执行 Reduce 任务，读取并合并中间文件内容，排序后聚合同一键的值，调用用户定义的 reducef函数处理，并将结果写入输出文件。merge()函数用于将多个 Map 任务的中间结果合并为最终的输出。具体实现包括：\n数据读取：遍历所有 Map 任务生成的中间文件，读取其中的键值对。 数据合并：将读取的键值对存储到intermediate切片中，供后续的reduce处理使用。 %%{init: {'flowchart': {'curve': 'basis'}}}%% graph LR; A(开始) --\u003e B[读取 MMap 个 mr-X-Y文件]; subgraph merge函数 B --\u003e C[解析每行的keyValue 追加到intermediate]; C --\u003e D[结束读取]; end D --\u003e E[对intermediate 中的KeyValue 根据key排序]; E --\u003e F[遍历排序后的intermediate ，收集具有相同key的 所有value]; F --\u003e G[调用reducef函数 处理values]; G --\u003e H[/输出最终文件/] H --\u003e I(结束) 任务完成 任务完成之后，需要通知coordinator进行后续处理，在worker需要执行的代码：\n1 2 3 4 5 6 7 func CallWorkerComplete(args *GetTaskArgs, reply *GetTaskReply) { ok := call(\"Coordinator.WorkerComplete\", args, reply) if !ok { fmt.Print(\"call failed!\\n\") Debug(dError, \"Worker complete failed!\\n\") } } Coordinator 结构体 在本实验中，coordinator.go负责实现管理整个任务过程，包括，初始化任务、给worker分配任务、处理任务完成的后续等等。为了管理任务，需要创建一个数据结构Coodinator，它包含以下变量：\n1 2 3 4 5 6 7 8 9 // coordinator的属性 type Coordinator struct { state Type // coordinator状态，判断当前是在分配map任务还是reduce任务 mMap int // map任务数量上限，取决于输入文件数量 nReduce int // reduce任务数量上限，取决于mrcoordinator.go中的nReduce mapping map[int]int // 正在执行的map任务列表，key为workerId，value为taskId reducing map[int]int // 正在执行的reduce任务列表，key为workerId，value为taskId tasks [][]Task // 将map任务和reduce任务合并成一个二维数组，方便简化代码，防止重复代码 } 初始化 在创建一个coordinator时，需要对以上属性进行赋初值的操作，具体是在MakeCoordinator()中中进行下面的操作：\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 mMap := len(files) c := Coordinator{ mMap: mMap, nReduce: nReduce, mapping: make(map[int]int), reducing: make(map[int]int), tasks: make([][]Task, 2), } mapTasks := make([]Task, mMap) reduceTasks := make([]Task, nReduce) for i := 0; i \u003c mMap; i++ { // 初始化map任务列表 // 将任务的状态设置为Idle，表示未分配 // 需要初始化NReduce，因为在Worker中，需要根据NReduce来将结果划分到不同的桶中 mapTasks[i] = Task{ TaskType: MapType, TaskState: Idle, TaskId: i, NReduce: c.nReduce, FileName: files[i], } } for i := 0; i \u003c nReduce; i++ { // 初始化reduce任务列表 // 需要初始化MMap，因为在Worker中，需要根据MMap来读取map任务的结果 reduceTasks[i] = Task{ TaskType: ReduceType, TaskState: Idle, TaskId: i, MMap: c.mMap, } } c.tasks[0] = mapTasks c.tasks[1] = reduceTasks 其中Task结构体如下：\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 type State int type Type int const ( Idle State = iota // 任务未分配 InProgress // 任务进行中 Completed // 任务已完成 ) const ( MapType Type = iota ReduceType Done Wait // 通知worker等待 ) type Task struct { TaskType Type // 任务类型 TaskState State // 任务状态 TaskId int // 任务编号，代表执行的是map或reduce的第几个任务 NReduce int // reduce任务数量 MMap int // map任务数量 startTime time.Time // 任务开始时间 FileName string // 输入/输出文件名 } Task的更新机制如下：\n在MakeCoordinator()（coordinator初始化）时，将所有任务状态设置为Idle，不设置StartTime 在GetTask()（coordinator给worker分配任务）后，将任务状态设置为InProgress，设置StartTime 在WorkerComplete()（检测到任务完成）时，将任务状态设置为Completed，不设置StartTime 在CheckTimeOut()（检测到worker超时）时，将任务状态设置为Idle，以备之后的worker进行申请，且不设置StartTime。 分配任务 当worker空闲并向自己发送任务申请时，coordinator需要根据现在所处的阶段以及剩余任务的状态来进行任务的分配。具体实现如下：\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 func (c *Coordinator) GetTask(args *GetTaskArgs, reply *GetTaskReply) error { mutex.Lock() defer mutex.Unlock() if c.state == MapType || c.state == ReduceType { taskId := 0 // 遍历map任务或reduce任务，找到第一个状态为Idle的任务 for ; taskId \u003c len(c.tasks[c.state]); taskId++ { if c.tasks[c.state][taskId].TaskState == Idle { break } } // 若未找到Idle的任务，则将任务状态设置为Wait，通知worker等待 if taskId == len(c.tasks[c.state]) { reply.Task = Task{TaskType: Wait} return nil } // 如果是map任务，则需要初始化map任务的content if c.state == MapType { reply.FileName = c.tasks[0][taskId].FileName c.initMapContent(reply) c.mapping[args.WorkerId] = taskId } else { c.reducing[args.WorkerId] = taskId } // 将任务状态设置为InProgress，更新StartTime，用以判断任务是否超时 c.tasks[c.state][taskId].TaskState = InProgress c.tasks[c.state][taskId].startTime = time.Now() reply.Task = c.tasks[c.state][taskId] } else if c.state == Done { reply.Task = Task{TaskType: Done} } return nil } 其中，总任务有以下几种状态\n若有map任务闲置，则状态为MapType\n若所有map任务都已完成，则状态为ReduceType\n若正在等待map或reduce任务完成，则状态为InProgress\n若所有reduce任务都已完成，则状态为Done\n下面的流程图可以大致总结上面的代码：\n%%{init: {'flowchart': {'curve': 'basis'}}}%% flowchart LR; A(开始) --\u003e B{Map 或Reduce?}; B -- 是 --\u003e C{有Idle任务?}; B -- 否 --\u003e Z[返回任务Done]; C -- 是 --\u003e D[设置任务为InProgress]; C -- 否 --\u003e E[返回任务Wait]; D --\u003e F{任务类型 是Map?}; F -- 是 --\u003e G[初始化Map任务内容 记录WorkerId与taskId映射]; F -- 否 --\u003e H[记录WorkerId与taskId映射]; G --\u003e I[返回任务]; H --\u003e I; E --\u003e J(结束); I --\u003e J; Z --\u003e J; 判断任务是否完成 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 // 如果任务类型和当前的状态都匹配，则将任务状态设置为Completed if args.TaskType == c.state { taskId := 0 var taskType string if args.TaskType == MapType { taskId = c.mapping[args.WorkerId] delete(c.mapping, args.WorkerId) taskType = \"map\" } else { taskId = c.reducing[args.WorkerId] delete(c.reducing, args.WorkerId) taskType = \"reduce\" } c.tasks[c.state][taskId].TaskState = Completed for _, task := range c.tasks[c.state] { if task.TaskState != Completed { return nil } } // 将状态设置为下一个状态 // MapType的下一个状态是ReduceType，ReduceType的下一个状态是Done Debug(dInfo, \"All %s tasks are completed\\n\", taskType) c.state += 1 } return nil 在worker的部分，设置在完成任务之后，需要通过RPC向coordinator来处理后续，因此需要在这里实现，逻辑比较简单：\n在分配任务时，将workerID与taskID对应了起来并放在了c.mapping或c.reducing中，因此在任务结束时，需要将其从c.mapping或c.reducing中移除。但是需要注意的是，并不是每接收到一个调用请求，就进行删除操作，因为可能有一些过时的操作，例如一个worker1未在规定的时间内完成任务，然后coordinator将该任务分配给了其他worker2，当worker1超时完成了任务并发送调用，该调用实际上不应该被执行。 在上述步骤执行之后，需要将c.tasks中对应的任务状态置为Completed。 然后判断本阶段的任务是否都完成，如果都完成，就进入下一个阶段。 将代码总结如下图：\n%%{init: {'flowchart': {'curve': 'basis'}}}%% graph LR; A(开始) --\u003e B{任务类型和 当前状态匹配?}; B -- 否 --\u003e Z(返回); B -- 是 --\u003e C[删除Worker映射 检查所有任务是否完成]; C --\u003e H{都已完成?}; H -- 否 --\u003e Z; H -- 是 --\u003e I[将Coordinator 设置为下一个状态]; I --\u003e Z; 判断所有任务是否完成 程序需要一个退出条件——所有任务都已经结束。这一段代码比较简单：\n1 2 3 4 5 6 7 8 9 10 11 func (c *Coordinator) Done() bool { // 依次遍历map任务和reduce任务，判断任务状态是否为Completed mutex.Lock() defer mutex.Unlock() for _, task := range append(c.tasks[0], c.tasks[1]...) { if task.TaskState != Completed { return false } } return true } 结果 优化 检测超时 因为执行过程的不确定性，有一些worker可能在执行过程出错，或由于网络问题，worker无法及时将结果返回给coordinator。为了提高效率需要进行超时处理。\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 for { time.Sleep(3 * time.Second) mutex.Lock() if c.state == MapType { for workerId, taskId := range c.mapping { if time.Since(c.tasks[0][taskId].startTime) \u003e time.Duration(maxTime)*time.Second { c.tasks[0][taskId].TaskState = Idle delete(c.mapping, workerId) } } } else if c.state == ReduceType { for workerId, taskId := range c.reducing { if time.Since(c.tasks[1][taskId].startTime) \u003e time.Duration(maxTime)*time.Second { c.tasks[1][taskId].TaskState = Idle delete(c.reducing, workerId) } } } mutex.Unlock() } 在任务分配时，本地都会存储任务的开始时间，在判断超时时，只需要将当前时间与starttime进行比较，判断是否超出规定时间。使用一个线程，每隔3秒就执行一轮检查。检查的步骤为：遍历与当前状态相符合的正在进行的任务列表，如果某一个任务超时，则将其从列表中删除，并将其状态重新置为idle以便分配给其他worker。\n为了减少当前主线程的负担，可以选择开辟一个线程来执行上面的操作，可以在main/mrcoordinator.go中m := mr.MakeCoordinator(os.Args[1:], 10)之后添加go m.CheckTimeOut(10)，含义是使用一个线程，不断检测是否有任务超时，且超时时间设置为10s。\n锁 在执行时，需要考虑对共享资源的访问控制，因此，需要对在适当位置添加锁。使用\n1 2 mutex.Lock() defer mutex.Unlock() 来进行加锁与解锁的操作。其次，需要考虑锁的粒度与位置，在worker进程中，不需要进行加锁，因为每个worker只有一个单线程来访问数据文件，将执行的结果存储到相应的文件中。\n但是在coordinator中，考虑到上一步所要执行的操作——开辟线程检测是否超时，该线程可能会与主线程在同一时刻访问资源，因此需要在一切可能引起冲突的地方添加锁。但是由于细粒度的锁（仅在读写语句前后加锁解锁）太复杂，导致代码非常冗长，所以更好的解决方案是，一旦某个函数要访问资源，就在该函数开始处加锁，在函数结束时解锁。虽然可能性能方面不如细粒度锁，因为一个函数可能会执行很长时间，导致其他操作无法及时访问，但是却方便实现很多，正如在mit6.824课上助教所说的，当前的目标是能够实现正确的效果。\n输出文件格式 Worker 的 map 任务代码需要一种方法将中间键/值对存储在文件中，以便在 Reduce 任务期间可以正确读回。一种可能性是使用 Go 的 encoding/json 包。要将 JSON 格式的键/值对写入打开的文件：\n1 2 3 enc := json.NewEncoder(file) for _, kv := ... { err := enc.Encode(\u0026kv) 并读回这样的文件：\n1 2 3 4 5 6 7 8 dec := json.NewDecoder(file) for { var kv KeyValue if err := dec.Decode(\u0026kv); err != nil { break } kva = append(kva, kv) } 因此需要修改相应的代码：\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 func devide(kva []KeyValue, taskId int, nReduce int) bool { files := make([]*os.File, nReduce) encoders := make([]*json.Encoder, nReduce) // 写入JSON for i := 0; i \u003c nReduce; i++ { mrOutName := fmt.Sprintf(rootPath+\"/intermediate/mr-out-%d-%d\", taskId, i) file, err := os.Create(mrOutName) if err != nil { log.Fatalf(\"cannot create %v\", mrOutName) return false } files[i] = file encoders[i] = json.NewEncoder(file) } for _, kv := range kva { reduceNo := ihash(kv.Key) % nReduce if err := encoders[reduceNo].Encode(\u0026kv); err != nil { log.Fatalf(\"cannot encode %v\", kv) return false } } for _, file := range files { file.Close() } return true } func merge(taskId int, mMap int) []KeyValue { var intermediate []KeyValue for i := 0; i \u003c mMap; i++ { mrOutName := fmt.Sprintf(rootPath+\"/intermediate/mr-out-%d-%d\", i, taskId) file, err := os.Open(mrOutName) if errors.Is(err, os.ErrNotExist) { continue } if err != nil { log.Fatalf(\"cannot open %v\", mrOutName) return nil } // 读取JSON dec := json.NewDecoder(file) for { var kv KeyValue if err := dec.Decode(\u0026kv); err != nil { break } intermediate = append(intermediate, kv) } file.Close() } return intermediate } Combine MapReduce论文中描述：\n在某些情况下，每个 map 任务产生的中间键可能会有很多重复，而且用户定义的 Reduce 函数具有可交换和可结合的特性。一个典型的例子是第 2.1 节中的单词计数案例。由于单词出现的频率通常遵循 Zipf 分布，每个 map 任务可能会生成数百或数千条 这种格式的记录。所有这些计数结果都会被发送到同一个 reduce 任务，并由 Reduce 函数合并成一个总数。为了优化这个过程，我们允许用户指定一个可选的 Combiner 函数，这个函数可以在数据发送到网络之前对数据进行局部合并。\nCombiner 函数在执行 map 任务的每台机器上运行。通常，相同的代码被用于实现 combiner 函数和 reduce 函数。reduce 函数与 combiner 函数之间的唯一区别在于 MapReduce 库处理函数输出的方式不同。reduce 函数的输出会直接写入最终的输出文件，而 combiner 函数的输出则被写入一个中间文件，该文件随后会被发送到 reduce 任务进行处理。\n局部合并大大加快了一些特定类型的 MapReduce 操作。附录 A 中提供了一个使用 combiner 函数的示例。\n对于wordCount，根据上一步优化中的json格式表示，其每一行都为：{\"Key\":\"hello\",\"Value\":\"1\"}，其中的hello需要替换为具体出现的单词，若不使用 Combine，则很有可能，经过 Map 阶段之后的某一中间文件（例如mr-out-1-1），其可能包含上百上千行的{\"Key\":\"hello\",\"Value\":\"1\"}，若传输到网络上，则可能文件过大导致一定的网络拥塞。因此，为了减少此类影响，可以将相同Key的所有行替换为一行，例如将123行{\"Key\":\"hello\",\"Value\":\"1\"}经过 Combine 替换成{\"Key\":\"hello\",\"Value\":\"123\"}。以此可以大大减少行数。\n但是经过分析，发现该 Combine 仅适用于特定场景，例如wordCount，而对于题目中给的indexer.go来说，则考虑得更加复杂。其中间输出为：\n1 2 3 4 {\"Key\":\"success\",\"Value\":\"../data/pg-being_ernest.txt\"} {\"Key\":\"considerably\",\"Value\":\"../data/pg-being_ernest.txt\"} {\"Key\":\"seven\",\"Value\":\"../data/pg-being_ernest.txt\"} {\"Key\":\"returns\",\"Value\":\"../data/pg-being_ernest.txt\"} Key为单词，Value为其出现的文档名。 其最终生成的文件每一行类似于：\n1 2 A 8 ../data/pg-being_ernest.txt,../data/pg-dorian_gray.txt,../data/pg-frankenstein.txt,../data/pg-grimm.txt,../data/pg-huckleberry_finn.txt,../data/pg-metamorphosis.txt,../data/pg-sherlock_holmes.txt,../data/pg-tom_sawyer.txt ABOUT 1 ../data/pg-tom_sawyer.txt 显然，无法通过类似于wordCount的Combine操作来处理indexer。因为实现 Combine 需要考虑到各种不同的任务，因此本实验并没有做 Combine。\n","wordCount":"2118","inLanguage":"en","image":"https://fireflyyh.top/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E","datePublished":"2024-12-22T00:00:00Z","dateModified":"2024-12-22T00:00:00Z","author":{"@type":"Person","name":"Jagger"},"mainEntityOfPage":{"@type":"WebPage","@id":"https://fireflyyh.top/posts/distributionsystem/marpreduce_report/"},"publisher":{"@type":"Organization","name":"Jagger's Blog","logo":{"@type":"ImageObject","url":"https://fireflyyh.top/img/yuan.jpg"}}}</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-Y30PKHXBN4"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-Y30PKHXBN4")</script></head><body id=top><script>localStorage.getItem("pref-theme")==="dark"?document.body.classList.add("dark"):localStorage.getItem("pref-theme")==="light"?document.body.classList.remove("dark"):window.matchMedia("(prefers-color-scheme: dark)").matches&&document.body.classList.add("dark")</script><header class=header><nav class=nav><div class=logo><a href=https://fireflyyh.top/ accesskey=h title="Jagger's Blog (Alt + H)"><img src=https://fireflyyh.top/img/laugh.jpg alt aria-label=logo height=35>Jagger's Blog</a><div class=logo-switches><button id=theme-toggle accesskey=t title="(Alt + T)"><svg id="moon" width="24" height="18" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg><svg id="sun" width="24" height="18" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></button></div></div><ul id=menu><li><a href=https://fireflyyh.top/archives/ title=Archives><span>Archives</span></a></li><li><a href=https://fireflyyh.top/categories/ title=Categories><span>Categories</span></a></li><li><a href=https://fireflyyh.top/tags/ title=Tags><span>Tags</span></a></li><li><a href=https://fireflyyh.top/search/ title="Search (Alt + /)" accesskey=/><span>Search</span></a></li><li><a href=https://fireflyyh.top/about/ title=About><span>About</span></a></li><li><a href=https://github.com/starsYHyh/Jagger/ title=Github><span>Github</span>&nbsp;<svg fill="none" shape-rendering="geometricPrecision" stroke="currentcolor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewBox="0 0 24 24" height="12" width="12"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg></a></li></ul></nav></header><main class=main><article class=post-single><header class=post-header><div class=breadcrumbs><a href=https://fireflyyh.top/>Home</a>&nbsp;»&nbsp;<a href=https://fireflyyh.top/posts/>Posts</a></div><h1 class="post-title entry-hint-parent">MapReduce实验报告</h1><div class=post-meta><span title='2024-12-22 00:00:00 +0000 UTC'>December 22, 2024</span>&nbsp;·&nbsp;10 min&nbsp;·&nbsp;2118 words&nbsp;·&nbsp;Jagger&nbsp;|&nbsp;<a href=https://github.com/starsYHyh/Jagger/tree/main/content/posts/DistributionSystem/marpreduce_report.md rel="noopener noreferrer" target=_blank>Suggest Changes</a></div></header><aside id=toc-container class="toc-container wide"><div class=toc><details open><summary accesskey=c title="(Alt + C)"><span class=details>Table of Contents</span></summary><div class=inner><ul><li><a href=#%e5%8e%9f%e7%90%86 aria-label=原理>原理</a><ul><li><a href=#%e7%b3%bb%e7%bb%9f%e6%9e%b6%e6%9e%84 aria-label=系统架构>系统架构</a></li><li><a href=#%e4%bb%bb%e5%8a%a1%e6%b5%81%e7%a8%8b aria-label=任务流程>任务流程</a></li><li><a href=#%e6%80%bb%e8%a7%88 aria-label=总览>总览</a></li></ul></li><li><a href=#%e5%ae%9e%e7%8e%b0%e8%bf%87%e7%a8%8b aria-label=实现过程>实现过程</a><ul><li><a href=#rpc aria-label=RPC>RPC</a></li><li><a href=#worker aria-label=Worker>Worker</a><ul><li><a href=#%e7%94%b3%e8%af%b7%e4%bb%bb%e5%8a%a1 aria-label=申请任务>申请任务</a></li><li><a href=#%e7%bb%93%e6%9e%84%e4%bd%93%e4%b8%8e%e6%8e%92%e5%ba%8f%e6%8e%a5%e5%8f%a3 aria-label=结构体与排序接口>结构体与排序接口</a></li><li><a href=#%e5%93%88%e5%b8%8c%e5%87%bd%e6%95%b0 aria-label=哈希函数>哈希函数</a></li><li><a href=#map%e4%bb%bb%e5%8a%a1 aria-label=Map任务>Map任务</a></li><li><a href=#reduce%e4%bb%bb%e5%8a%a1 aria-label=Reduce任务>Reduce任务</a></li><li><a href=#%e4%bb%bb%e5%8a%a1%e5%ae%8c%e6%88%90 aria-label=任务完成>任务完成</a></li></ul></li><li><a href=#coordinator aria-label=Coordinator>Coordinator</a><ul><li><a href=#%e7%bb%93%e6%9e%84%e4%bd%93 aria-label=结构体>结构体</a></li><li><a href=#%e5%88%9d%e5%a7%8b%e5%8c%96 aria-label=初始化>初始化</a></li><li><a href=#%e5%88%86%e9%85%8d%e4%bb%bb%e5%8a%a1 aria-label=分配任务>分配任务</a></li><li><a href=#%e5%88%a4%e6%96%ad%e4%bb%bb%e5%8a%a1%e6%98%af%e5%90%a6%e5%ae%8c%e6%88%90 aria-label=判断任务是否完成>判断任务是否完成</a></li><li><a href=#%e5%88%a4%e6%96%ad%e6%89%80%e6%9c%89%e4%bb%bb%e5%8a%a1%e6%98%af%e5%90%a6%e5%ae%8c%e6%88%90 aria-label=判断所有任务是否完成>判断所有任务是否完成</a></li></ul></li></ul></li><li><a href=#%e7%bb%93%e6%9e%9c aria-label=结果>结果</a></li><li><a href=#%e4%bc%98%e5%8c%96 aria-label=优化>优化</a><ul><li><a href=#%e6%a3%80%e6%b5%8b%e8%b6%85%e6%97%b6 aria-label=检测超时>检测超时</a></li><li><a href=#%e9%94%81 aria-label=锁>锁</a></li><li><a href=#%e8%be%93%e5%87%ba%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f aria-label=输出文件格式>输出文件格式</a></li><li><a href=#combine aria-label=Combine>Combine</a></li></ul></li></ul></div></details></div></aside><script>let activeElement,elements;window.addEventListener("DOMContentLoaded",function(){checkTocPosition(),elements=document.querySelectorAll("h1[id],h2[id],h3[id],h4[id],h5[id],h6[id]"),activeElement=elements[0];const t=encodeURI(activeElement.getAttribute("id")).toLowerCase();document.querySelector(`.inner ul li a[href="#${t}"]`).classList.add("active")},!1),window.addEventListener("resize",function(){checkTocPosition()},!1),window.addEventListener("scroll",()=>{elements&&(activeElement=Array.from(elements).find(e=>{if(getOffsetTop(e)-window.pageYOffset>0&&getOffsetTop(e)-window.pageYOffset<window.innerHeight/2)return e})||activeElement,elements.forEach(e=>{const t=encodeURI(e.getAttribute("id")).toLowerCase();e===activeElement?document.querySelector(`.inner ul li a[href="#${t}"]`).classList.add("active"):document.querySelector(`.inner ul li a[href="#${t}"]`).classList.remove("active")}))},!1);const main=parseInt(getComputedStyle(document.body).getPropertyValue("--article-width"),10),toc=parseInt(getComputedStyle(document.body).getPropertyValue("--toc-width"),10),gap=parseInt(getComputedStyle(document.body).getPropertyValue("--gap"),10);function checkTocPosition(){const e=document.body.scrollWidth;e-main-toc*2-gap*4>0?document.getElementById("toc-container").classList.add("wide"):document.getElementById("toc-container").classList.remove("wide")}function getOffsetTop(e){if(!e.getClientRects().length)return 0;let t=e.getBoundingClientRect(),n=e.ownerDocument.defaultView;return t.top+n.pageYOffset}</script><div class=post-content><h2 id=原理>原理<a hidden class=anchor aria-hidden=true href=#原理>#</a></h2><p><strong>具体可以看<a href=../mapreduce/>翻译的论文</a></strong></p><h3 id=系统架构>系统架构<a hidden class=anchor aria-hidden=true href=#系统架构>#</a></h3><img src=https://picgo-01.oss-cn-shanghai.aliyuncs.com/Images/mapreduce%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84.png alt=mapreduce系统架构 style=zoom:80%><p>MapReduce的整体系统架构图如上图所示。总体上可以分为三个部分：Client、Master、Worker</p><ul><li><p>在Client中，编写的MapReduce程序提交到master端，用户可通过Client提供的一些接口查看作业运行状态。</p></li><li><p>在Master中，又分为两个部分：</p><ul><li>Task Scheduler负责调度mapreduce作业，它将作业分解为多个Map任务和Reduce任务，然后将这些任务分配给集群中的不同节点来处理。</li><li>JobTracker负责它监控任务的执行状态，负责处理来自worker的数据，并负责将数据转发与存储。同时也负责任务的失败处理。</li></ul></li><li><p>在Worker中，分为了三个部分：</p><ul><li><p>TaskTracker任务：
+分布在集群各个节点上的工作节点，负责执行由JobTracker分配的Map和Reduce任务。每个TaskTracker节点都可以并行执行多个任务。TaskTracker会将任务的执行进度和状态报告给mastre中的JobTracker。</p></li><li><p>Map任务：
+Map任务是MapReduce处理的第一阶段。输入数据被分为多个分片，每个分片被分配给一个Map任务。Map任务处理数据片段，将其转化为键值对&lt;key, value>的形式。然后，它们将这些键值存储到一定位置并告知master，以供后续的Reduce任务使用。</p></li><li><p>Reduce任务：
+Reduce任务是MapReduce处理的第二阶段。Reduce任务负责处理由Map任务产生的中间键值对。它将相同键的数据进行汇总和归并处理，然后输出最终的计算结果。通常，Reduce任务会聚合、筛选或合并相同键的数据，实现对Map结果的进一步处理。</p></li></ul></li></ul><h3 id=任务流程>任务流程<a hidden class=anchor aria-hidden=true href=#任务流程>#</a></h3><img src=https://picgo-01.oss-cn-shanghai.aliyuncs.com/Images/mapreduce%E6%B5%81%E7%A8%8B.png style=zoom:50%><p>流程图如上图所示，关键流程有以下几步：</p><ol><li>用户程序中的MapReduce库首先将输入文件划分为M个分片，通常每个分片为16MB到64MB（用户可通过可选参数控制）。随后，库会在集群中的机器上启动程序的一些副本。</li><li>这些程序的副本中，有一份很特殊，它是master副本。其他的副本是被master分配了任务的worker副本。总计要分配 M个map任务和R个reduce任务。master选取闲置的worker并为每个选取的worker分配map或reduce任务。</li><li>被分配map任务的worker从输入数据分片中读取内容。其解析输入数据中的键值对，并将每个键值对传给用户定义的map函数。map函数输出的中间键值对在内存中缓存。</li><li>内存中缓存的键值对会定期地写入本地磁盘，写入的数据会被分区函数划分为R个区域。这些在磁盘中缓存的键值对的位置会被发送给master，master会将这些位置信息进一步传递给reduce worker。</li><li>当master通知reduce worker中间键值对的位置信息后，reduce worker会通过RPC的方式从map worker的本地磁盘中读取缓存的数据。当reduce worker读取完所有中间数据后，它会对中间数据按照键进行排序，以便将所有键相同的键值对分为一组。因为通常来说，需对键不同的数据会被映射到同一个reduce任务中，所以需要对数据排序。如果中间数据总量过大以至于无法放入内存中，则会使用外排序算法。</li><li>reduce worker遍历每一个遇到的中间键值对的，它会将键和该键对应的一系列值传递给用户定义的reduce函数。reduce函数的输出会被追加到该reduce分区的最终输出文件中。</li><li>当所有的map和reduce任务都执行完毕后，master会唤醒用户程序。此时，调用MapReduce的调应用序会返回到用户代码中。</li></ol><h3 id=总览>总览<a hidden class=anchor aria-hidden=true href=#总览>#</a></h3><p>本次实验最终实现的思路，其时序图如下：</p><img src=https://picgo-01.oss-cn-shanghai.aliyuncs.com/Images/mrSequence.svg style=width:400px;zoom:90%><p>实验的类图如下：</p><pre class=mermaid>classDiagram
+    class Coordinator {
+        +state: TaskType
+        +tasks: map[TaskType][]Task
+        +mapping: map[int]int
+        +reducing: map[int]int
+        +GetTask(args: GetTaskArgs, reply: *GetTaskReply) error
+        +WorkerComplete(args: *GetTaskArgs, reply: *GetTaskReply) error
+    }
+
+    class Worker {
+        +doMap(mapf: func(string, string) []KeyValue, reply: *GetTaskReply) bool
+        +doReduce(reducef: func(string, []string) string, reply: *GetTaskReply) bool
+        +merge(taskId: int, mMap: int) []KeyValue
+        +devide(kva: []KeyValue, taskId: int, nReduce: int) bool
+    }
+
+    class Task {
+        +TaskId: int
+        +TaskType: TaskType
+        +TaskState: TaskState
+        +startTime: time.Time
+        +FileName: string
+        +Content: string
+        +NReduce: int
+    }
+
+    class KeyValue {
+        +Key: string
+        +Value: string
+    }
+
+    Coordinator --&gt; Task : 管理
+    Worker --&gt; Task : 执行
+    Worker --&gt; KeyValue : 生成/处理
+    Task --&gt; KeyValue : 包含
+ </pre><h2 id=实现过程>实现过程<a hidden class=anchor aria-hidden=true href=#实现过程>#</a></h2><h3 id=rpc>RPC<a hidden class=anchor aria-hidden=true href=#rpc>#</a></h3><p>为了使得<code>Worker</code>和<code>Master</code>之间进行调用，首先要对他们之间进行沟通的内容进行规定，定义若干结构体于<code>rpc.go</code>文件中。</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>type</span> <span class=nx>GetTaskArgs</span> <span class=kd>struct</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>WorkerId</span> <span class=kt>int</span>  <span class=c1>// Worker ID
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>TaskType</span> <span class=nx>Type</span> <span class=c1>// Task Type
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>type</span> <span class=nx>GetTaskReply</span> <span class=kd>struct</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>Task</span>     <span class=nx>Task</span>   <span class=c1>// 任务
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>FileName</span> <span class=kt>string</span> <span class=c1>// 文件名，提供给worker中的mapf和reducef使用
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>Content</span>  <span class=kt>string</span> <span class=c1>// 文件内容，提供给worker中的mapf和reducef使用
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p><code>GetTaskArgs</code>中的<code>WorkerId</code>部分用于标记Worker，在单机系统中，我使用进程号来作为一个<code>WorkerId</code>。<code>GetTaskReply</code>包含三个部分：</p><ul><li><p><code>Task</code>是一个结构体，用来存储任务元数据。</p></li><li><p><code>Filename</code>用来记录文件名，在<code>map</code>和<code>reduce</code>任务中，其起到不同的作用。</p></li><li><p><code>Content</code>用来存储文件中的具体内容。在<code>map</code>任务中，<code>Filename</code>用来记录输入文件名，并将文件内容存放到<code>content</code>中。而在reduce任务中，<code>Filename</code>用来记录输出文件名，以供<code>reduce</code>任务将结果存放到指定的文件中。</p></li></ul><h3 id=worker>Worker<a hidden class=anchor aria-hidden=true href=#worker>#</a></h3><p>在本实验中，<code>worker.go</code> 文件实现了 MapReduce 框架中的 Worker 组件，负责执行 Map 和 Reduce 任务，并与 Coordinator 进行通信以获取任务和报告完成状态。其主要分为下面几个部分：</p><h4 id=申请任务>申请任务<a hidden class=anchor aria-hidden=true href=#申请任务>#</a></h4><p>当<code>Worker</code>空闲时，需要不断地向<code>Coordinator</code>申请任务，具体的代码如下：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// 初始化请求参数
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=nx>args</span> <span class=o>:=</span> <span class=nx>GetTaskArgs</span><span class=p>{</span><span class=nx>WorkerId</span><span class=p>:</span> <span class=nx>os</span><span class=p>.</span><span class=nf>Getpid</span><span class=p>()}</span>
+</span></span><span class=line><span class=cl><span class=nx>reply</span> <span class=o>:=</span> <span class=nx>GetTaskReply</span><span class=p>{}</span>
+</span></span><span class=line><span class=cl><span class=c1>// 向Coordinator发送申请
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=nf>CallGetTask</span><span class=p>(</span><span class=o>&amp;</span><span class=nx>args</span><span class=p>,</span> <span class=o>&amp;</span><span class=nx>reply</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=nx>taskType</span> <span class=o>:=</span> <span class=nx>reply</span><span class=p>.</span><span class=nx>Task</span><span class=p>.</span><span class=nx>TaskType</span>
+</span></span><span class=line><span class=cl><span class=c1>// 如果接收到的任务类型为Map或Reduce，则说明要进行具体的处理
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=k>if</span> <span class=nx>taskType</span> <span class=o>==</span> <span class=nx>MapType</span> <span class=o>||</span> <span class=nx>taskType</span> <span class=o>==</span> <span class=nx>ReduceType</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=kd>var</span> <span class=nx>completed</span> <span class=kt>bool</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=nx>taskType</span> <span class=o>==</span> <span class=nx>MapType</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=nx>completed</span> <span class=p>=</span> <span class=nf>doMap</span><span class=p>(</span><span class=nx>mapf</span><span class=p>,</span> <span class=o>&amp;</span><span class=nx>reply</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span> <span class=k>else</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=nx>completed</span> <span class=p>=</span> <span class=nf>doReduce</span><span class=p>(</span><span class=nx>reducef</span><span class=p>,</span> <span class=o>&amp;</span><span class=nx>reply</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 如果任务完成，则要向对方发送任务完成的通知，方便后续处理
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=k>if</span> <span class=nx>completed</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=nx>args</span> <span class=p>=</span> <span class=nx>GetTaskArgs</span><span class=p>{</span><span class=nx>WorkerId</span><span class=p>:</span> <span class=nx>os</span><span class=p>.</span><span class=nf>Getpid</span><span class=p>(),</span> <span class=nx>TaskType</span><span class=p>:</span> <span class=nx>taskType</span><span class=p>}</span>
+</span></span><span class=line><span class=cl>        <span class=nx>reply</span> <span class=p>=</span> <span class=nx>GetTaskReply</span><span class=p>{}</span>
+</span></span><span class=line><span class=cl>        <span class=nf>CallWorkerComplete</span><span class=p>(</span><span class=o>&amp;</span><span class=nx>args</span><span class=p>,</span> <span class=o>&amp;</span><span class=nx>reply</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span> <span class=k>else</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=c1>// 如果未能完成任务，则表示处理失败
+</span></span></span><span class=line><span class=cl><span class=c1></span>        <span class=nf>Debug</span><span class=p>(</span><span class=nx>dError</span><span class=p>,</span> <span class=s>&#34;failed!\n&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>}</span> <span class=k>else</span> <span class=k>if</span> <span class=nx>taskType</span> <span class=o>==</span> <span class=nx>Wait</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 如果master要求本worker执行wait，则等待一段时间后再去请求任务
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>time</span><span class=p>.</span><span class=nf>Sleep</span><span class=p>(</span><span class=mi>1000</span> <span class=o>*</span> <span class=nx>time</span><span class=p>.</span><span class=nx>Millisecond</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>}</span> <span class=k>else</span> <span class=k>if</span> <span class=nx>taskType</span> <span class=o>==</span> <span class=nx>Done</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 如果master要求本worker执行done，则表示所有任务已经完成
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nf>Debug</span><span class=p>(</span><span class=nx>dInfo</span><span class=p>,</span> <span class=s>&#34;All tasks are completed\n&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><h4 id=结构体与排序接口>结构体与排序接口<a hidden class=anchor aria-hidden=true href=#结构体与排序接口>#</a></h4><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>type</span> <span class=nx>KeyValue</span> <span class=kd>struct</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>Key</span>   <span class=kt>string</span>
+</span></span><span class=line><span class=cl>    <span class=nx>Value</span> <span class=kt>string</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>type</span> <span class=nx>ByKey</span> <span class=p>[]</span><span class=nx>KeyValue</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>a</span> <span class=nx>ByKey</span><span class=p>)</span> <span class=nf>Len</span><span class=p>()</span> <span class=kt>int</span>           <span class=p>{</span> <span class=k>return</span> <span class=nb>len</span><span class=p>(</span><span class=nx>a</span><span class=p>)</span> <span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>a</span> <span class=nx>ByKey</span><span class=p>)</span> <span class=nf>Swap</span><span class=p>(</span><span class=nx>i</span><span class=p>,</span> <span class=nx>j</span> <span class=kt>int</span><span class=p>)</span>      <span class=p>{</span> <span class=nx>a</span><span class=p>[</span><span class=nx>i</span><span class=p>],</span> <span class=nx>a</span><span class=p>[</span><span class=nx>j</span><span class=p>]</span> <span class=p>=</span> <span class=nx>a</span><span class=p>[</span><span class=nx>j</span><span class=p>],</span> <span class=nx>a</span><span class=p>[</span><span class=nx>i</span><span class=p>]</span> <span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>a</span> <span class=nx>ByKey</span><span class=p>)</span> <span class=nf>Less</span><span class=p>(</span><span class=nx>i</span><span class=p>,</span> <span class=nx>j</span> <span class=kt>int</span><span class=p>)</span> <span class=kt>bool</span> <span class=p>{</span> <span class=k>return</span> <span class=nx>a</span><span class=p>[</span><span class=nx>i</span><span class=p>].</span><span class=nx>Key</span> <span class=p>&lt;</span> <span class=nx>a</span><span class=p>[</span><span class=nx>j</span><span class=p>].</span><span class=nx>Key</span> <span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p><code>KeyValue</code> 结构体用于存储键值对，是 Map 和 Reduce 任务之间传递数据的基本单元。<code>Key</code>是一个单词，而<code>Value</code>是其出现的次数，在本实验中，若在一段内容中，一个单词<code>word</code>出现了5次，则建立5个元素，它们的内容都为<code>key = word && value = 1</code>直至进入到<code>reduce</code>阶段。
+而<code>ByKey</code>排序实现了<code>sort.Interface</code>接口，用于对 <code>KeyValue</code> 切片按键进行排序，以便在 Reduce 阶段聚合同一键的值。</p><h4 id=哈希函数>哈希函数<a hidden class=anchor aria-hidden=true href=#哈希函数>#</a></h4><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=nf>ihash</span><span class=p>(</span><span class=nx>key</span> <span class=kt>string</span><span class=p>)</span> <span class=kt>int</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>h</span> <span class=o>:=</span> <span class=nx>fnv</span><span class=p>.</span><span class=nf>New32a</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>    <span class=nx>h</span><span class=p>.</span><span class=nf>Write</span><span class=p>([]</span><span class=nb>byte</span><span class=p>(</span><span class=nx>key</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=nb>int</span><span class=p>(</span><span class=nx>h</span><span class=p>.</span><span class=nf>Sum32</span><span class=p>()</span> <span class=o>&amp;</span> <span class=mh>0x7fffffff</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>使用 <code>ihash(key) % NReduce</code> 选择每个 <code>KeyValue</code>由 Map 发出的 Reduce 任务编号。例如，如果 <code>NReduce</code>是 10，那么 <code>ihash(key)</code> 的结果将是 0 到 9 之间的整数。即，将 key 映射到特定的 reduce 桶中，例如，文档可能有 100 个不同的单词，但是只有 10 个 reduce 桶，且确保同一个键总是被分配到相同的 reduce 桶。</p><h4 id=map任务>Map任务<a hidden class=anchor aria-hidden=true href=#map任务>#</a></h4><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=nf>devide</span><span class=p>(</span><span class=nx>kva</span> <span class=p>[]</span><span class=nx>KeyValue</span><span class=p>,</span> <span class=nx>taskId</span> <span class=kt>int</span><span class=p>,</span> <span class=nx>nReduce</span> <span class=kt>int</span><span class=p>)</span> <span class=kt>bool</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=nx>files</span> <span class=o>:=</span> <span class=nb>make</span><span class=p>([]</span><span class=o>*</span><span class=nx>os</span><span class=p>.</span><span class=nx>File</span><span class=p>,</span> <span class=nx>nReduce</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=nx>encoders</span> <span class=o>:=</span> <span class=nb>make</span><span class=p>([]</span><span class=o>*</span><span class=nx>json</span><span class=p>.</span><span class=nx>Encoder</span><span class=p>,</span> <span class=nx>nReduce</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=c1>// 创造nReduce个文件
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=k>for</span> <span class=nx>i</span> <span class=o>:=</span> <span class=mi>0</span><span class=p>;</span> <span class=nx>i</span> <span class=p>&lt;</span> <span class=nx>nReduce</span><span class=p>;</span> <span class=nx>i</span><span class=o>++</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>mrOutName</span> <span class=o>:=</span> <span class=nx>fmt</span><span class=p>.</span><span class=nf>Sprintf</span><span class=p>(</span><span class=nx>rootPath</span><span class=o>+</span><span class=s>&#34;/intermediate/mr-out-%d-%d&#34;</span><span class=p>,</span> <span class=nx>taskId</span><span class=p>,</span> <span class=nx>i</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=nx>file</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>os</span><span class=p>.</span><span class=nf>Create</span><span class=p>(</span><span class=nx>mrOutName</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>log</span><span class=p>.</span><span class=nf>Fatalf</span><span class=p>(</span><span class=s>&#34;cannot create %v&#34;</span><span class=p>,</span> <span class=nx>mrOutName</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>			<span class=k>return</span> <span class=kc>false</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=nx>files</span><span class=p>[</span><span class=nx>i</span><span class=p>]</span> <span class=p>=</span> <span class=nx>file</span>
+</span></span><span class=line><span class=cl>		<span class=nx>encoders</span><span class=p>[</span><span class=nx>i</span><span class=p>]</span> <span class=p>=</span> <span class=nx>json</span><span class=p>.</span><span class=nf>NewEncoder</span><span class=p>(</span><span class=nx>file</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=c1>// 将kv对写入JSON文件
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=k>for</span> <span class=nx>_</span><span class=p>,</span> <span class=nx>kv</span> <span class=o>:=</span> <span class=k>range</span> <span class=nx>kva</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>reduceNo</span> <span class=o>:=</span> <span class=nf>ihash</span><span class=p>(</span><span class=nx>kv</span><span class=p>.</span><span class=nx>Key</span><span class=p>)</span> <span class=o>%</span> <span class=nx>nReduce</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>encoders</span><span class=p>[</span><span class=nx>reduceNo</span><span class=p>].</span><span class=nf>Encode</span><span class=p>(</span><span class=o>&amp;</span><span class=nx>kv</span><span class=p>);</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>log</span><span class=p>.</span><span class=nf>Fatalf</span><span class=p>(</span><span class=s>&#34;cannot encode %v&#34;</span><span class=p>,</span> <span class=nx>kv</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>			<span class=k>return</span> <span class=kc>false</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=k>for</span> <span class=nx>_</span><span class=p>,</span> <span class=nx>file</span> <span class=o>:=</span> <span class=k>range</span> <span class=nx>files</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>file</span><span class=p>.</span><span class=nf>Close</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=k>return</span> <span class=kc>true</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>func</span> <span class=nf>doMap</span><span class=p>(</span><span class=nx>mapf</span> <span class=kd>func</span><span class=p>(</span><span class=kt>string</span><span class=p>,</span> <span class=kt>string</span><span class=p>)</span> <span class=p>[]</span><span class=nx>KeyValue</span><span class=p>,</span> <span class=nx>reply</span> <span class=o>*</span><span class=nx>GetTaskReply</span><span class=p>)</span> <span class=kt>bool</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=nx>kva</span> <span class=o>:=</span> <span class=nf>mapf</span><span class=p>(</span><span class=nx>reply</span><span class=p>.</span><span class=nx>FileName</span><span class=p>,</span> <span class=nx>reply</span><span class=p>.</span><span class=nx>Content</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=k>return</span> <span class=nf>devide</span><span class=p>(</span><span class=nx>kva</span><span class=p>,</span> <span class=nx>reply</span><span class=p>.</span><span class=nx>Task</span><span class=p>.</span><span class=nx>TaskId</span><span class=p>,</span> <span class=nx>reply</span><span class=p>.</span><span class=nx>Task</span><span class=p>.</span><span class=nx>NReduce</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p><code>doMap()</code>函数执行 Map 任务，调用用户定义的<code>mapf</code>函数处理输入文件内容，并将生成的键值对分配到 Reduce 桶中。<code>devide</code>函数将 Map 阶段生成的键值对<code>kva</code>分配到<code>nReduce</code>个 Reduce 桶中。具体步骤包括：</p><ol><li>计算每个键的哈希值并确定对应的 Reduce 编号。</li><li>根据任务 ID 和 Reduce 编号构建中间文件名，文件名格式为<code>mr-out-taskId-reduceNo</code>（<code>taskId</code>为该map任务的ID，<code>reduceNo</code>为上一步确认的Reduce编号）。</li><li>检查中间文件是否存在，若存在则追加写入，否则创建新文件。</li><li>处理文件操作中的潜在错误。</li></ol><pre class=mermaid>%%{init: {&#39;flowchart&#39;: {&#39;curve&#39;: &#39;basis&#39;}}}%%
+graph LR;
+    A(开始) --&gt; B[/输入原始文件内容/];
+    B --&gt; C[&#34;调用mapf函数
+    	生成KeyValue列表(kva)&#34;];
+    C --&gt; E[遍历kva
+    	中的每个KeyValue];
+
+    %% devide函数内部逻辑
+    
+    %% 添加一些额外的说明
+    subgraph &#34;devide函数&#34;
+        E --&gt; G[&#34;计算reduce桶编号
+        	(reduceNo)&#34;];
+        G --&gt; K[向文件mr-out-taskId
+        	-reduceNo
+        	写入KeyValue对];
+    end
+    K --&gt; N[返回true,
+    	表示map任务完成];
+    N --&gt; O(结束);
+ </pre><h4 id=reduce任务>Reduce任务<a hidden class=anchor aria-hidden=true href=#reduce任务>#</a></h4><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span><span class=lnt>49
+</span><span class=lnt>50
+</span><span class=lnt>51
+</span><span class=lnt>52
+</span><span class=lnt>53
+</span><span class=lnt>54
+</span><span class=lnt>55
+</span><span class=lnt>56
+</span><span class=lnt>57
+</span><span class=lnt>58
+</span><span class=lnt>59
+</span><span class=lnt>60
+</span><span class=lnt>61
+</span><span class=lnt>62
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// 将mr-X-Y文件中的内容读取到Intermediate中
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>func</span> <span class=nf>merge</span><span class=p>(</span><span class=nx>taskId</span> <span class=kt>int</span><span class=p>,</span> <span class=nx>mMap</span> <span class=kt>int</span><span class=p>)</span> <span class=p>[]</span><span class=nx>KeyValue</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=kd>var</span> <span class=nx>intermediate</span> <span class=p>[]</span><span class=nx>KeyValue</span>
+</span></span><span class=line><span class=cl>	<span class=c1>// 读取所有map任务的输出文件
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=k>for</span> <span class=nx>i</span> <span class=o>:=</span> <span class=mi>0</span><span class=p>;</span> <span class=nx>i</span> <span class=p>&lt;</span> <span class=nx>mMap</span><span class=p>;</span> <span class=nx>i</span><span class=o>++</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>mrOutName</span> <span class=o>:=</span> <span class=nx>fmt</span><span class=p>.</span><span class=nf>Sprintf</span><span class=p>(</span><span class=nx>rootPath</span><span class=o>+</span><span class=s>&#34;/intermediate/mr-out-%d-%d&#34;</span><span class=p>,</span> <span class=nx>i</span><span class=p>,</span> <span class=nx>taskId</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=nx>file</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>os</span><span class=p>.</span><span class=nf>Open</span><span class=p>(</span><span class=nx>mrOutName</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=nx>errors</span><span class=p>.</span><span class=nf>Is</span><span class=p>(</span><span class=nx>err</span><span class=p>,</span> <span class=nx>os</span><span class=p>.</span><span class=nx>ErrNotExist</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=k>continue</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>log</span><span class=p>.</span><span class=nf>Fatalf</span><span class=p>(</span><span class=s>&#34;cannot open %v&#34;</span><span class=p>,</span> <span class=nx>mrOutName</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>			<span class=k>return</span> <span class=kc>nil</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=c1>// 读取文件内容，解析为KeyValue
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=nx>dec</span> <span class=o>:=</span> <span class=nx>json</span><span class=p>.</span><span class=nf>NewDecoder</span><span class=p>(</span><span class=nx>file</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=k>for</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=kd>var</span> <span class=nx>kv</span> <span class=nx>KeyValue</span>
+</span></span><span class=line><span class=cl>			<span class=k>if</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>dec</span><span class=p>.</span><span class=nf>Decode</span><span class=p>(</span><span class=o>&amp;</span><span class=nx>kv</span><span class=p>);</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>				<span class=k>break</span>
+</span></span><span class=line><span class=cl>			<span class=p>}</span>
+</span></span><span class=line><span class=cl>			<span class=nx>intermediate</span> <span class=p>=</span> <span class=nb>append</span><span class=p>(</span><span class=nx>intermediate</span><span class=p>,</span> <span class=nx>kv</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=nx>file</span><span class=p>.</span><span class=nf>Close</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=k>return</span> <span class=nx>intermediate</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>func</span> <span class=nf>doReduce</span><span class=p>(</span><span class=nx>reducef</span> <span class=kd>func</span><span class=p>(</span><span class=kt>string</span><span class=p>,</span> <span class=p>[]</span><span class=kt>string</span><span class=p>)</span> <span class=kt>string</span><span class=p>,</span> <span class=nx>reply</span> <span class=o>*</span><span class=nx>GetTaskReply</span><span class=p>)</span> <span class=kt>bool</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=c1>// 将mr-X-Y文件中的内容读取到Intermediate中
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nx>intermediate</span> <span class=o>:=</span> <span class=nf>merge</span><span class=p>(</span><span class=nx>reply</span><span class=p>.</span><span class=nx>Task</span><span class=p>.</span><span class=nx>TaskId</span><span class=p>,</span> <span class=nx>reply</span><span class=p>.</span><span class=nx>Task</span><span class=p>.</span><span class=nx>MMap</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=c1>// 下面的代码与mrsequential.go中的代码基本一样，只需要修改输出文件
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=c1>// 对中间数据根据key进行排序
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nx>sort</span><span class=p>.</span><span class=nf>Sort</span><span class=p>(</span><span class=nf>ByKey</span><span class=p>(</span><span class=nx>intermediate</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>	<span class=c1>// 创建输出文件
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nx>oname</span> <span class=o>:=</span> <span class=nx>rootPath</span> <span class=o>+</span> <span class=s>&#34;/res/mr-out-&#34;</span> <span class=o>+</span> <span class=nx>strconv</span><span class=p>.</span><span class=nf>Itoa</span><span class=p>(</span><span class=nx>reply</span><span class=p>.</span><span class=nx>Task</span><span class=p>.</span><span class=nx>TaskId</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=nx>ofile</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>os</span><span class=p>.</span><span class=nf>Create</span><span class=p>(</span><span class=nx>oname</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>log</span><span class=p>.</span><span class=nf>Fatalf</span><span class=p>(</span><span class=s>&#34;cannot create %v&#34;</span><span class=p>,</span> <span class=nx>oname</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=k>return</span> <span class=kc>false</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=k>defer</span> <span class=nx>ofile</span><span class=p>.</span><span class=nf>Close</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=nx>i</span> <span class=o>:=</span> <span class=mi>0</span>
+</span></span><span class=line><span class=cl>	<span class=k>for</span> <span class=nx>i</span> <span class=p>&lt;</span> <span class=nb>len</span><span class=p>(</span><span class=nx>intermediate</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>j</span> <span class=o>:=</span> <span class=nx>i</span> <span class=o>+</span> <span class=mi>1</span>
+</span></span><span class=line><span class=cl>		<span class=k>for</span> <span class=nx>j</span> <span class=p>&lt;</span> <span class=nb>len</span><span class=p>(</span><span class=nx>intermediate</span><span class=p>)</span> <span class=o>&amp;&amp;</span> <span class=nx>intermediate</span><span class=p>[</span><span class=nx>j</span><span class=p>].</span><span class=nx>Key</span> <span class=o>==</span> <span class=nx>intermediate</span><span class=p>[</span><span class=nx>i</span><span class=p>].</span><span class=nx>Key</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>j</span><span class=o>++</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=c1>// values是一个字符串切片，存储相同key的所有value
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=nx>values</span> <span class=o>:=</span> <span class=p>[]</span><span class=kt>string</span><span class=p>{}</span>
+</span></span><span class=line><span class=cl>		<span class=k>for</span> <span class=nx>k</span> <span class=o>:=</span> <span class=nx>i</span><span class=p>;</span> <span class=nx>k</span> <span class=p>&lt;</span> <span class=nx>j</span><span class=p>;</span> <span class=nx>k</span><span class=o>++</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>values</span> <span class=p>=</span> <span class=nb>append</span><span class=p>(</span><span class=nx>values</span><span class=p>,</span> <span class=nx>intermediate</span><span class=p>[</span><span class=nx>k</span><span class=p>].</span><span class=nx>Value</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=c1>// 在此时，values是[&#34;1&#34;, &#34;1&#34;, &#34;1&#34;, ...]，1的个数就是单词出现的次数
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=nx>output</span> <span class=o>:=</span> <span class=nf>reducef</span><span class=p>(</span><span class=nx>intermediate</span><span class=p>[</span><span class=nx>i</span><span class=p>].</span><span class=nx>Key</span><span class=p>,</span> <span class=nx>values</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=nx>fmt</span><span class=p>.</span><span class=nf>Fprintf</span><span class=p>(</span><span class=nx>ofile</span><span class=p>,</span> <span class=s>&#34;%v %v\n&#34;</span><span class=p>,</span> <span class=nx>intermediate</span><span class=p>[</span><span class=nx>i</span><span class=p>].</span><span class=nx>Key</span><span class=p>,</span> <span class=nx>output</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=nx>i</span> <span class=p>=</span> <span class=nx>j</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=k>return</span> <span class=kc>true</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p><code>doReduce()</code>函数执行 Reduce 任务，读取并合并中间文件内容，排序后聚合同一键的值，调用用户定义的 <code>reducef</code>函数处理，并将结果写入输出文件。<code>merge()</code>函数用于将多个 Map 任务的中间结果合并为最终的输出。具体实现包括：</p><ol><li><strong>数据读取</strong>：遍历所有 Map 任务生成的中间文件，读取其中的键值对。</li><li><strong>数据合并</strong>：将读取的键值对存储到<code>intermediate</code>切片中，供后续的reduce处理使用。</li></ol><pre class=mermaid>%%{init: {&#39;flowchart&#39;: {&#39;curve&#39;: &#39;basis&#39;}}}%%
+graph LR;
+	A(开始) --&gt; B[读取 MMap 个
+				mr-X-Y文件];
+	
+	subgraph merge函数
+		B --&gt; C[解析每行的keyValue
+				追加到intermediate];
+        C --&gt; D[结束读取];
+	end
+	D --&gt; E[对intermediate
+			中的KeyValue
+			根据key排序];
+    E --&gt; F[遍历排序后的intermediate
+    		，收集具有相同key的
+    		所有value];
+    F --&gt; G[调用reducef函数
+    		处理values];
+    G --&gt; H[/输出最终文件/]
+    H --&gt; I(结束)
+ </pre><h4 id=任务完成>任务完成<a hidden class=anchor aria-hidden=true href=#任务完成>#</a></h4><p>任务完成之后，需要通知<code>coordinator</code>进行后续处理，在<code>worker</code>需要执行的代码：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=nf>CallWorkerComplete</span><span class=p>(</span><span class=nx>args</span> <span class=o>*</span><span class=nx>GetTaskArgs</span><span class=p>,</span> <span class=nx>reply</span> <span class=o>*</span><span class=nx>GetTaskReply</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=nx>ok</span> <span class=o>:=</span> <span class=nf>call</span><span class=p>(</span><span class=s>&#34;Coordinator.WorkerComplete&#34;</span><span class=p>,</span> <span class=nx>args</span><span class=p>,</span> <span class=nx>reply</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=p>!</span><span class=nx>ok</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>fmt</span><span class=p>.</span><span class=nf>Print</span><span class=p>(</span><span class=s>&#34;call failed!\n&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=nf>Debug</span><span class=p>(</span><span class=nx>dError</span><span class=p>,</span> <span class=s>&#34;Worker complete failed!\n&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><h3 id=coordinator>Coordinator<a hidden class=anchor aria-hidden=true href=#coordinator>#</a></h3><h4 id=结构体>结构体<a hidden class=anchor aria-hidden=true href=#结构体>#</a></h4><p>在本实验中，<code>coordinator.go</code>负责实现管理整个任务过程，包括，初始化任务、给<code>worker</code>分配任务、处理任务完成的后续等等。为了管理任务，需要创建一个数据结构<code>Coodinator</code>，它包含以下变量：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span><span class=lnt>9
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// coordinator的属性
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=kd>type</span> <span class=nx>Coordinator</span> <span class=kd>struct</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=nx>state</span>    <span class=nx>Type</span>        <span class=c1>// coordinator状态，判断当前是在分配map任务还是reduce任务
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nx>mMap</span>     <span class=kt>int</span>         <span class=c1>// map任务数量上限，取决于输入文件数量
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nx>nReduce</span>  <span class=kt>int</span>         <span class=c1>// reduce任务数量上限，取决于mrcoordinator.go中的nReduce
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nx>mapping</span>  <span class=kd>map</span><span class=p>[</span><span class=kt>int</span><span class=p>]</span><span class=kt>int</span> <span class=c1>// 正在执行的map任务列表，key为workerId，value为taskId
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nx>reducing</span> <span class=kd>map</span><span class=p>[</span><span class=kt>int</span><span class=p>]</span><span class=kt>int</span> <span class=c1>// 正在执行的reduce任务列表，key为workerId，value为taskId
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nx>tasks</span>    <span class=p>[][]</span><span class=nx>Task</span>    <span class=c1>// 将map任务和reduce任务合并成一个二维数组，方便简化代码，防止重复代码
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><h4 id=初始化>初始化<a hidden class=anchor aria-hidden=true href=#初始化>#</a></h4><p>在创建一个<code>coordinator</code>时，需要对以上属性进行赋初值的操作，具体是在<code>MakeCoordinator()</code>中中进行下面的操作：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=nx>mMap</span> <span class=o>:=</span> <span class=nb>len</span><span class=p>(</span><span class=nx>files</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=nx>c</span> <span class=o>:=</span> <span class=nx>Coordinator</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>mMap</span><span class=p>:</span>     <span class=nx>mMap</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>    <span class=nx>nReduce</span><span class=p>:</span>  <span class=nx>nReduce</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>    <span class=nx>mapping</span><span class=p>:</span>  <span class=nb>make</span><span class=p>(</span><span class=kd>map</span><span class=p>[</span><span class=kt>int</span><span class=p>]</span><span class=kt>int</span><span class=p>),</span>
+</span></span><span class=line><span class=cl>    <span class=nx>reducing</span><span class=p>:</span> <span class=nb>make</span><span class=p>(</span><span class=kd>map</span><span class=p>[</span><span class=kt>int</span><span class=p>]</span><span class=kt>int</span><span class=p>),</span>
+</span></span><span class=line><span class=cl>    <span class=nx>tasks</span><span class=p>:</span>    <span class=nb>make</span><span class=p>([][]</span><span class=nx>Task</span><span class=p>,</span> <span class=mi>2</span><span class=p>),</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=nx>mapTasks</span> <span class=o>:=</span> <span class=nb>make</span><span class=p>([]</span><span class=nx>Task</span><span class=p>,</span> <span class=nx>mMap</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=nx>reduceTasks</span> <span class=o>:=</span> <span class=nb>make</span><span class=p>([]</span><span class=nx>Task</span><span class=p>,</span> <span class=nx>nReduce</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=k>for</span> <span class=nx>i</span> <span class=o>:=</span> <span class=mi>0</span><span class=p>;</span> <span class=nx>i</span> <span class=p>&lt;</span> <span class=nx>mMap</span><span class=p>;</span> <span class=nx>i</span><span class=o>++</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 初始化map任务列表
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=c1>// 将任务的状态设置为Idle，表示未分配
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=c1>// 需要初始化NReduce，因为在Worker中，需要根据NReduce来将结果划分到不同的桶中
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>mapTasks</span><span class=p>[</span><span class=nx>i</span><span class=p>]</span> <span class=p>=</span> <span class=nx>Task</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=nx>TaskType</span><span class=p>:</span>  <span class=nx>MapType</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>        <span class=nx>TaskState</span><span class=p>:</span> <span class=nx>Idle</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>        <span class=nx>TaskId</span><span class=p>:</span>    <span class=nx>i</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>        <span class=nx>NReduce</span><span class=p>:</span>   <span class=nx>c</span><span class=p>.</span><span class=nx>nReduce</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>        <span class=nx>FileName</span><span class=p>:</span>  <span class=nx>files</span><span class=p>[</span><span class=nx>i</span><span class=p>],</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=k>for</span> <span class=nx>i</span> <span class=o>:=</span> <span class=mi>0</span><span class=p>;</span> <span class=nx>i</span> <span class=p>&lt;</span> <span class=nx>nReduce</span><span class=p>;</span> <span class=nx>i</span><span class=o>++</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=c1>// 初始化reduce任务列表
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=c1>// 需要初始化MMap，因为在Worker中，需要根据MMap来读取map任务的结果
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>reduceTasks</span><span class=p>[</span><span class=nx>i</span><span class=p>]</span> <span class=p>=</span> <span class=nx>Task</span><span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=nx>TaskType</span><span class=p>:</span>  <span class=nx>ReduceType</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>        <span class=nx>TaskState</span><span class=p>:</span> <span class=nx>Idle</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>        <span class=nx>TaskId</span><span class=p>:</span>    <span class=nx>i</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>        <span class=nx>MMap</span><span class=p>:</span>      <span class=nx>c</span><span class=p>.</span><span class=nx>mMap</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=nx>c</span><span class=p>.</span><span class=nx>tasks</span><span class=p>[</span><span class=mi>0</span><span class=p>]</span> <span class=p>=</span> <span class=nx>mapTasks</span>
+</span></span><span class=line><span class=cl><span class=nx>c</span><span class=p>.</span><span class=nx>tasks</span><span class=p>[</span><span class=mi>1</span><span class=p>]</span> <span class=p>=</span> <span class=nx>reduceTasks</span>
+</span></span></code></pre></td></tr></table></div></div><p>其中<code>Task</code>结构体如下：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>type</span> <span class=nx>State</span> <span class=kt>int</span>
+</span></span><span class=line><span class=cl><span class=kd>type</span> <span class=nx>Type</span> <span class=kt>int</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>const</span> <span class=p>(</span>
+</span></span><span class=line><span class=cl>    <span class=nx>Idle</span>       <span class=nx>State</span> <span class=p>=</span> <span class=kc>iota</span> <span class=c1>// 任务未分配
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>InProgress</span>              <span class=c1>// 任务进行中
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>Completed</span>               <span class=c1>// 任务已完成
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=kd>const</span> <span class=p>(</span>
+</span></span><span class=line><span class=cl>    <span class=nx>MapType</span> <span class=nx>Type</span> <span class=p>=</span> <span class=kc>iota</span>
+</span></span><span class=line><span class=cl>    <span class=nx>ReduceType</span>
+</span></span><span class=line><span class=cl>    <span class=nx>Done</span>
+</span></span><span class=line><span class=cl>    <span class=nx>Wait</span> <span class=c1>// 通知worker等待
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>type</span> <span class=nx>Task</span> <span class=kd>struct</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>TaskType</span>  <span class=nx>Type</span>      <span class=c1>// 任务类型
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>TaskState</span> <span class=nx>State</span>     <span class=c1>// 任务状态
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>TaskId</span>    <span class=kt>int</span>       <span class=c1>// 任务编号，代表执行的是map或reduce的第几个任务
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>NReduce</span>   <span class=kt>int</span>       <span class=c1>// reduce任务数量
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>MMap</span>      <span class=kt>int</span>       <span class=c1>// map任务数量
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>startTime</span> <span class=nx>time</span><span class=p>.</span><span class=nx>Time</span> <span class=c1>// 任务开始时间
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nx>FileName</span>  <span class=kt>string</span>    <span class=c1>// 输入/输出文件名
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p><code>Task</code>的更新机制如下：</p><ol><li>在<code>MakeCoordinator()</code>（<code>coordinator</code>初始化）时，将所有任务状态设置为<code>Idle</code>，不设置<code>StartTime</code></li><li>在<code>GetTask()</code>（<code>coordinator</code>给<code>worker</code>分配任务）后，将任务状态设置为<code>InProgress</code>，设置<code>StartTime</code></li><li>在<code>WorkerComplete()</code>（检测到任务完成）时，将任务状态设置为<code>Completed</code>，不设置<code>StartTime</code></li><li>在<code>CheckTimeOut()</code>（检测到<code>worker</code>超时）时，将任务状态设置为<code>Idle</code>，以备之后的<code>worker</code>进行申请，且不设置<code>StartTime</code>。</li></ol><h4 id=分配任务>分配任务<a hidden class=anchor aria-hidden=true href=#分配任务>#</a></h4><p>当<code>worker</code>空闲并向自己发送任务申请时，<code>coordinator</code>需要根据现在所处的阶段以及剩余任务的状态来进行任务的分配。具体实现如下：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>c</span> <span class=o>*</span><span class=nx>Coordinator</span><span class=p>)</span> <span class=nf>GetTask</span><span class=p>(</span><span class=nx>args</span> <span class=o>*</span><span class=nx>GetTaskArgs</span><span class=p>,</span> <span class=nx>reply</span> <span class=o>*</span><span class=nx>GetTaskReply</span><span class=p>)</span> <span class=kt>error</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=nx>mutex</span><span class=p>.</span><span class=nf>Lock</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>	<span class=k>defer</span> <span class=nx>mutex</span><span class=p>.</span><span class=nf>Unlock</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>c</span><span class=p>.</span><span class=nx>state</span> <span class=o>==</span> <span class=nx>MapType</span> <span class=o>||</span> <span class=nx>c</span><span class=p>.</span><span class=nx>state</span> <span class=o>==</span> <span class=nx>ReduceType</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>taskId</span> <span class=o>:=</span> <span class=mi>0</span>
+</span></span><span class=line><span class=cl>		<span class=c1>// 遍历map任务或reduce任务，找到第一个状态为Idle的任务
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=k>for</span> <span class=p>;</span> <span class=nx>taskId</span> <span class=p>&lt;</span> <span class=nb>len</span><span class=p>(</span><span class=nx>c</span><span class=p>.</span><span class=nx>tasks</span><span class=p>[</span><span class=nx>c</span><span class=p>.</span><span class=nx>state</span><span class=p>]);</span> <span class=nx>taskId</span><span class=o>++</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=k>if</span> <span class=nx>c</span><span class=p>.</span><span class=nx>tasks</span><span class=p>[</span><span class=nx>c</span><span class=p>.</span><span class=nx>state</span><span class=p>][</span><span class=nx>taskId</span><span class=p>].</span><span class=nx>TaskState</span> <span class=o>==</span> <span class=nx>Idle</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>				<span class=k>break</span>
+</span></span><span class=line><span class=cl>			<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=c1>// 若未找到Idle的任务，则将任务状态设置为Wait，通知worker等待
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=k>if</span> <span class=nx>taskId</span> <span class=o>==</span> <span class=nb>len</span><span class=p>(</span><span class=nx>c</span><span class=p>.</span><span class=nx>tasks</span><span class=p>[</span><span class=nx>c</span><span class=p>.</span><span class=nx>state</span><span class=p>])</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>reply</span><span class=p>.</span><span class=nx>Task</span> <span class=p>=</span> <span class=nx>Task</span><span class=p>{</span><span class=nx>TaskType</span><span class=p>:</span> <span class=nx>Wait</span><span class=p>}</span>
+</span></span><span class=line><span class=cl>			<span class=k>return</span> <span class=kc>nil</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=c1>// 如果是map任务，则需要初始化map任务的content
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=k>if</span> <span class=nx>c</span><span class=p>.</span><span class=nx>state</span> <span class=o>==</span> <span class=nx>MapType</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>reply</span><span class=p>.</span><span class=nx>FileName</span> <span class=p>=</span> <span class=nx>c</span><span class=p>.</span><span class=nx>tasks</span><span class=p>[</span><span class=mi>0</span><span class=p>][</span><span class=nx>taskId</span><span class=p>].</span><span class=nx>FileName</span>
+</span></span><span class=line><span class=cl>			<span class=nx>c</span><span class=p>.</span><span class=nf>initMapContent</span><span class=p>(</span><span class=nx>reply</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>			<span class=nx>c</span><span class=p>.</span><span class=nx>mapping</span><span class=p>[</span><span class=nx>args</span><span class=p>.</span><span class=nx>WorkerId</span><span class=p>]</span> <span class=p>=</span> <span class=nx>taskId</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span> <span class=k>else</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>c</span><span class=p>.</span><span class=nx>reducing</span><span class=p>[</span><span class=nx>args</span><span class=p>.</span><span class=nx>WorkerId</span><span class=p>]</span> <span class=p>=</span> <span class=nx>taskId</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=c1>// 将任务状态设置为InProgress，更新StartTime，用以判断任务是否超时
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=nx>c</span><span class=p>.</span><span class=nx>tasks</span><span class=p>[</span><span class=nx>c</span><span class=p>.</span><span class=nx>state</span><span class=p>][</span><span class=nx>taskId</span><span class=p>].</span><span class=nx>TaskState</span> <span class=p>=</span> <span class=nx>InProgress</span>
+</span></span><span class=line><span class=cl>		<span class=nx>c</span><span class=p>.</span><span class=nx>tasks</span><span class=p>[</span><span class=nx>c</span><span class=p>.</span><span class=nx>state</span><span class=p>][</span><span class=nx>taskId</span><span class=p>].</span><span class=nx>startTime</span> <span class=p>=</span> <span class=nx>time</span><span class=p>.</span><span class=nf>Now</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>		<span class=nx>reply</span><span class=p>.</span><span class=nx>Task</span> <span class=p>=</span> <span class=nx>c</span><span class=p>.</span><span class=nx>tasks</span><span class=p>[</span><span class=nx>c</span><span class=p>.</span><span class=nx>state</span><span class=p>][</span><span class=nx>taskId</span><span class=p>]</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span> <span class=k>else</span> <span class=k>if</span> <span class=nx>c</span><span class=p>.</span><span class=nx>state</span> <span class=o>==</span> <span class=nx>Done</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>reply</span><span class=p>.</span><span class=nx>Task</span> <span class=p>=</span> <span class=nx>Task</span><span class=p>{</span><span class=nx>TaskType</span><span class=p>:</span> <span class=nx>Done</span><span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=k>return</span> <span class=kc>nil</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>其中，总任务有以下几种状态</p><ul><li><p>若有map任务闲置，则状态为<code>MapType</code></p></li><li><p>若所有map任务都已完成，则状态为<code>ReduceType</code></p></li><li><p>若正在等待map或reduce任务完成，则状态为<code>InProgress</code></p></li><li><p>若所有reduce任务都已完成，则状态为<code>Done</code></p></li></ul><p>下面的流程图可以大致总结上面的代码：</p><pre class=mermaid>%%{init: {&#39;flowchart&#39;: {&#39;curve&#39;: &#39;basis&#39;}}}%%
+flowchart LR;
+    A(开始) --&gt; B{Map
+    或Reduce?};
+    B -- 是 --&gt; C{有Idle任务?};
+    B -- 否 --&gt; Z[返回任务Done];
+    C -- 是 --&gt; D[设置任务为InProgress];
+    C -- 否 --&gt; E[返回任务Wait];
+    D --&gt; F{任务类型
+    是Map?};
+    F -- 是 --&gt; G[初始化Map任务内容
+    记录WorkerId与taskId映射];
+    F -- 否 --&gt; H[记录WorkerId与taskId映射];
+    G --&gt; I[返回任务];
+    H --&gt; I;
+    E --&gt; J(结束);
+    I --&gt; J;
+    Z --&gt; J;
+ </pre><h4 id=判断任务是否完成>判断任务是否完成<a hidden class=anchor aria-hidden=true href=#判断任务是否完成>#</a></h4><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// 如果任务类型和当前的状态都匹配，则将任务状态设置为Completed
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=k>if</span> <span class=nx>args</span><span class=p>.</span><span class=nx>TaskType</span> <span class=o>==</span> <span class=nx>c</span><span class=p>.</span><span class=nx>state</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>taskId</span> <span class=o>:=</span> <span class=mi>0</span>
+</span></span><span class=line><span class=cl>    <span class=kd>var</span> <span class=nx>taskType</span> <span class=kt>string</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=nx>args</span><span class=p>.</span><span class=nx>TaskType</span> <span class=o>==</span> <span class=nx>MapType</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=nx>taskId</span> <span class=p>=</span> <span class=nx>c</span><span class=p>.</span><span class=nx>mapping</span><span class=p>[</span><span class=nx>args</span><span class=p>.</span><span class=nx>WorkerId</span><span class=p>]</span>
+</span></span><span class=line><span class=cl>        <span class=nb>delete</span><span class=p>(</span><span class=nx>c</span><span class=p>.</span><span class=nx>mapping</span><span class=p>,</span> <span class=nx>args</span><span class=p>.</span><span class=nx>WorkerId</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=nx>taskType</span> <span class=p>=</span> <span class=s>&#34;map&#34;</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span> <span class=k>else</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=nx>taskId</span> <span class=p>=</span> <span class=nx>c</span><span class=p>.</span><span class=nx>reducing</span><span class=p>[</span><span class=nx>args</span><span class=p>.</span><span class=nx>WorkerId</span><span class=p>]</span>
+</span></span><span class=line><span class=cl>        <span class=nb>delete</span><span class=p>(</span><span class=nx>c</span><span class=p>.</span><span class=nx>reducing</span><span class=p>,</span> <span class=nx>args</span><span class=p>.</span><span class=nx>WorkerId</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=nx>taskType</span> <span class=p>=</span> <span class=s>&#34;reduce&#34;</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl>    <span class=nx>c</span><span class=p>.</span><span class=nx>tasks</span><span class=p>[</span><span class=nx>c</span><span class=p>.</span><span class=nx>state</span><span class=p>][</span><span class=nx>taskId</span><span class=p>].</span><span class=nx>TaskState</span> <span class=p>=</span> <span class=nx>Completed</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=k>for</span> <span class=nx>_</span><span class=p>,</span> <span class=nx>task</span> <span class=o>:=</span> <span class=k>range</span> <span class=nx>c</span><span class=p>.</span><span class=nx>tasks</span><span class=p>[</span><span class=nx>c</span><span class=p>.</span><span class=nx>state</span><span class=p>]</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=nx>task</span><span class=p>.</span><span class=nx>TaskState</span> <span class=o>!=</span> <span class=nx>Completed</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>            <span class=k>return</span> <span class=kc>nil</span>
+</span></span><span class=line><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c1>// 将状态设置为下一个状态
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=c1>// MapType的下一个状态是ReduceType，ReduceType的下一个状态是Done
+</span></span></span><span class=line><span class=cl><span class=c1></span>    <span class=nf>Debug</span><span class=p>(</span><span class=nx>dInfo</span><span class=p>,</span> <span class=s>&#34;All %s tasks are completed\n&#34;</span><span class=p>,</span> <span class=nx>taskType</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=nx>c</span><span class=p>.</span><span class=nx>state</span> <span class=o>+=</span> <span class=mi>1</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=k>return</span> <span class=kc>nil</span>
+</span></span></code></pre></td></tr></table></div></div><p>在worker的部分，设置在完成任务之后，需要通过RPC向<code>coordinator</code>来处理后续，因此需要在这里实现，逻辑比较简单：</p><ol><li>在分配任务时，将<code>workerID</code>与<code>taskID</code>对应了起来并放在了<code>c.mapping</code>或<code>c.reducing</code>中，因此在任务结束时，需要将其从<code>c.mapping</code>或<code>c.reducing</code>中移除。但是需要注意的是，并不是每接收到一个调用请求，就进行删除操作，因为可能有一些过时的操作，例如一个<code>worker1</code>未在规定的时间内完成任务，然后<code>coordinator</code>将该任务分配给了其他<code>worker2</code>，当<code>worker1</code>超时完成了任务并发送调用，该调用实际上不应该被执行。</li><li>在上述步骤执行之后，需要将<code>c.tasks</code>中对应的任务状态置为<code>Completed</code>。</li><li>然后判断本阶段的任务是否都完成，如果都完成，就进入下一个阶段。</li></ol><p>将代码总结如下图：</p><pre class=mermaid>%%{init: {&#39;flowchart&#39;: {&#39;curve&#39;: &#39;basis&#39;}}}%%
+graph LR;
+    A(开始) --&gt; B{任务类型和
+    	当前状态匹配?};
+    B -- 否 --&gt; Z(返回);
+    B -- 是 --&gt; C[删除Worker映射
+    	检查所有任务是否完成];
+    C --&gt; H{都已完成?};
+    H -- 否 --&gt; Z;
+    H -- 是 --&gt; I[将Coordinator
+    	设置为下一个状态];
+    I --&gt; Z;
+ </pre><h4 id=判断所有任务是否完成>判断所有任务是否完成<a hidden class=anchor aria-hidden=true href=#判断所有任务是否完成>#</a></h4><p>程序需要一个退出条件——所有任务都已经结束。这一段代码比较简单：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=p>(</span><span class=nx>c</span> <span class=o>*</span><span class=nx>Coordinator</span><span class=p>)</span> <span class=nf>Done</span><span class=p>()</span> <span class=kt>bool</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=c1>// 依次遍历map任务和reduce任务，判断任务状态是否为Completed
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=nx>mutex</span><span class=p>.</span><span class=nf>Lock</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>	<span class=k>defer</span> <span class=nx>mutex</span><span class=p>.</span><span class=nf>Unlock</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>	<span class=k>for</span> <span class=nx>_</span><span class=p>,</span> <span class=nx>task</span> <span class=o>:=</span> <span class=k>range</span> <span class=nb>append</span><span class=p>(</span><span class=nx>c</span><span class=p>.</span><span class=nx>tasks</span><span class=p>[</span><span class=mi>0</span><span class=p>],</span> <span class=nx>c</span><span class=p>.</span><span class=nx>tasks</span><span class=p>[</span><span class=mi>1</span><span class=p>]</span><span class=o>...</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=nx>task</span><span class=p>.</span><span class=nx>TaskState</span> <span class=o>!=</span> <span class=nx>Completed</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=k>return</span> <span class=kc>false</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=k>return</span> <span class=kc>true</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=结果>结果<a hidden class=anchor aria-hidden=true href=#结果>#</a></h2><img src=https://picgo-01.oss-cn-shanghai.aliyuncs.com/Images/mrStart.png alt=mrStart style=zoom:67%>
+<img src=https://picgo-01.oss-cn-shanghai.aliyuncs.com/Images/mrEnd.png style=zoom:67%><h2 id=优化>优化<a hidden class=anchor aria-hidden=true href=#优化>#</a></h2><h3 id=检测超时>检测超时<a hidden class=anchor aria-hidden=true href=#检测超时>#</a></h3><p>因为执行过程的不确定性，有一些<code>worker</code>可能在执行过程出错，或由于网络问题，<code>worker</code>无法及时将结果返回给<code>coordinator</code>。为了提高效率需要进行超时处理。</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=k>for</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>    <span class=nx>time</span><span class=p>.</span><span class=nf>Sleep</span><span class=p>(</span><span class=mi>3</span> <span class=o>*</span> <span class=nx>time</span><span class=p>.</span><span class=nx>Second</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=nx>mutex</span><span class=p>.</span><span class=nf>Lock</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>    <span class=k>if</span> <span class=nx>c</span><span class=p>.</span><span class=nx>state</span> <span class=o>==</span> <span class=nx>MapType</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=k>for</span> <span class=nx>workerId</span><span class=p>,</span> <span class=nx>taskId</span> <span class=o>:=</span> <span class=k>range</span> <span class=nx>c</span><span class=p>.</span><span class=nx>mapping</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>            <span class=k>if</span> <span class=nx>time</span><span class=p>.</span><span class=nf>Since</span><span class=p>(</span><span class=nx>c</span><span class=p>.</span><span class=nx>tasks</span><span class=p>[</span><span class=mi>0</span><span class=p>][</span><span class=nx>taskId</span><span class=p>].</span><span class=nx>startTime</span><span class=p>)</span> <span class=p>&gt;</span> <span class=nx>time</span><span class=p>.</span><span class=nf>Duration</span><span class=p>(</span><span class=nx>maxTime</span><span class=p>)</span><span class=o>*</span><span class=nx>time</span><span class=p>.</span><span class=nx>Second</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>                <span class=nx>c</span><span class=p>.</span><span class=nx>tasks</span><span class=p>[</span><span class=mi>0</span><span class=p>][</span><span class=nx>taskId</span><span class=p>].</span><span class=nx>TaskState</span> <span class=p>=</span> <span class=nx>Idle</span>
+</span></span><span class=line><span class=cl>                <span class=nb>delete</span><span class=p>(</span><span class=nx>c</span><span class=p>.</span><span class=nx>mapping</span><span class=p>,</span> <span class=nx>workerId</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=p>}</span>
+</span></span><span class=line><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span> <span class=k>else</span> <span class=k>if</span> <span class=nx>c</span><span class=p>.</span><span class=nx>state</span> <span class=o>==</span> <span class=nx>ReduceType</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>        <span class=k>for</span> <span class=nx>workerId</span><span class=p>,</span> <span class=nx>taskId</span> <span class=o>:=</span> <span class=k>range</span> <span class=nx>c</span><span class=p>.</span><span class=nx>reducing</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>            <span class=k>if</span> <span class=nx>time</span><span class=p>.</span><span class=nf>Since</span><span class=p>(</span><span class=nx>c</span><span class=p>.</span><span class=nx>tasks</span><span class=p>[</span><span class=mi>1</span><span class=p>][</span><span class=nx>taskId</span><span class=p>].</span><span class=nx>startTime</span><span class=p>)</span> <span class=p>&gt;</span> <span class=nx>time</span><span class=p>.</span><span class=nf>Duration</span><span class=p>(</span><span class=nx>maxTime</span><span class=p>)</span><span class=o>*</span><span class=nx>time</span><span class=p>.</span><span class=nx>Second</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>                <span class=nx>c</span><span class=p>.</span><span class=nx>tasks</span><span class=p>[</span><span class=mi>1</span><span class=p>][</span><span class=nx>taskId</span><span class=p>].</span><span class=nx>TaskState</span> <span class=p>=</span> <span class=nx>Idle</span>
+</span></span><span class=line><span class=cl>                <span class=nb>delete</span><span class=p>(</span><span class=nx>c</span><span class=p>.</span><span class=nx>reducing</span><span class=p>,</span> <span class=nx>workerId</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=p>}</span>
+</span></span><span class=line><span class=cl>        <span class=p>}</span>
+</span></span><span class=line><span class=cl>    <span class=p>}</span>
+</span></span><span class=line><span class=cl>    <span class=nx>mutex</span><span class=p>.</span><span class=nf>Unlock</span><span class=p>()</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>在任务分配时，本地都会存储任务的开始时间，在判断超时时，只需要将当前时间与<code>starttime</code>进行比较，判断是否超出规定时间。使用一个线程，每隔3秒就执行一轮检查。检查的步骤为：遍历与当前状态相符合的正在进行的任务列表，如果某一个任务超时，则将其从列表中删除，并将其状态重新置为<code>idle</code>以便分配给其他<code>worker</code>。</p><p>为了减少当前主线程的负担，可以选择开辟一个线程来执行上面的操作，可以在<code>main/mrcoordinator.go</code>中<code>m := mr.MakeCoordinator(os.Args[1:], 10)</code>之后添加<code>go m.CheckTimeOut(10)</code>，含义是使用一个线程，不断检测是否有任务超时，且超时时间设置为10s。</p><h3 id=锁>锁<a hidden class=anchor aria-hidden=true href=#锁>#</a></h3><p>在执行时，需要考虑对共享资源的访问控制，因此，需要对在适当位置添加锁。使用</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=nx>mutex</span><span class=p>.</span><span class=nf>Lock</span><span class=p>()</span>
+</span></span><span class=line><span class=cl><span class=k>defer</span> <span class=nx>mutex</span><span class=p>.</span><span class=nf>Unlock</span><span class=p>()</span>
+</span></span></code></pre></td></tr></table></div></div><p>来进行加锁与解锁的操作。其次，需要考虑锁的粒度与位置，在<code>worker</code>进程中，不需要进行加锁，因为每个worker只有一个单线程来访问数据文件，将执行的结果存储到相应的文件中。</p><p>但是在<code>coordinator</code>中，考虑到上一步所要执行的操作——开辟线程检测是否超时，该线程可能会与主线程在同一时刻访问资源，因此需要在一切可能引起冲突的地方添加锁。但是由于细粒度的锁（仅在读写语句前后加锁解锁）太复杂，导致代码非常冗长，所以更好的解决方案是，一旦某个函数要访问资源，就在该函数开始处加锁，在函数结束时解锁。虽然可能性能方面不如细粒度锁，因为一个函数可能会执行很长时间，导致其他操作无法及时访问，但是却方便实现很多，正如在mit6.824课上助教所说的，当前的目标是能够实现正确的效果。</p><h3 id=输出文件格式>输出文件格式<a hidden class=anchor aria-hidden=true href=#输出文件格式>#</a></h3><p>Worker 的 map 任务代码需要一种方法将中间键/值对存储在文件中，以便在 Reduce 任务期间可以正确读回。一种可能性是使用 Go 的 <code>encoding/json</code> 包。要将 JSON 格式的键/值对写入打开的文件：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=nx>enc</span> <span class=o>:=</span> <span class=nx>json</span><span class=p>.</span><span class=nf>NewEncoder</span><span class=p>(</span><span class=nx>file</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=k>for</span> <span class=nx>_</span><span class=p>,</span> <span class=nx>kv</span> <span class=o>:=</span> <span class=o>...</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=nx>err</span> <span class=o>:=</span> <span class=nx>enc</span><span class=p>.</span><span class=nf>Encode</span><span class=p>(</span><span class=o>&amp;</span><span class=nx>kv</span><span class=p>)</span>
+</span></span></code></pre></td></tr></table></div></div><p>并读回这样的文件：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=nx>dec</span> <span class=o>:=</span> <span class=nx>json</span><span class=p>.</span><span class=nf>NewDecoder</span><span class=p>(</span><span class=nx>file</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=k>for</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=kd>var</span> <span class=nx>kv</span> <span class=nx>KeyValue</span>
+</span></span><span class=line><span class=cl>	<span class=k>if</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>dec</span><span class=p>.</span><span class=nf>Decode</span><span class=p>(</span><span class=o>&amp;</span><span class=nx>kv</span><span class=p>);</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>  		<span class=k>break</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=nx>kva</span> <span class=p>=</span> <span class=nb>append</span><span class=p>(</span><span class=nx>kva</span><span class=p>,</span> <span class=nx>kv</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>因此需要修改相应的代码：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span><span class=lnt>49
+</span><span class=lnt>50
+</span><span class=lnt>51
+</span><span class=lnt>52
+</span><span class=lnt>53
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span> <span class=nf>devide</span><span class=p>(</span><span class=nx>kva</span> <span class=p>[]</span><span class=nx>KeyValue</span><span class=p>,</span> <span class=nx>taskId</span> <span class=kt>int</span><span class=p>,</span> <span class=nx>nReduce</span> <span class=kt>int</span><span class=p>)</span> <span class=kt>bool</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=nx>files</span> <span class=o>:=</span> <span class=nb>make</span><span class=p>([]</span><span class=o>*</span><span class=nx>os</span><span class=p>.</span><span class=nx>File</span><span class=p>,</span> <span class=nx>nReduce</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=nx>encoders</span> <span class=o>:=</span> <span class=nb>make</span><span class=p>([]</span><span class=o>*</span><span class=nx>json</span><span class=p>.</span><span class=nx>Encoder</span><span class=p>,</span> <span class=nx>nReduce</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=c1>// 写入JSON
+</span></span></span><span class=line><span class=cl><span class=c1></span>	<span class=k>for</span> <span class=nx>i</span> <span class=o>:=</span> <span class=mi>0</span><span class=p>;</span> <span class=nx>i</span> <span class=p>&lt;</span> <span class=nx>nReduce</span><span class=p>;</span> <span class=nx>i</span><span class=o>++</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>mrOutName</span> <span class=o>:=</span> <span class=nx>fmt</span><span class=p>.</span><span class=nf>Sprintf</span><span class=p>(</span><span class=nx>rootPath</span><span class=o>+</span><span class=s>&#34;/intermediate/mr-out-%d-%d&#34;</span><span class=p>,</span> <span class=nx>taskId</span><span class=p>,</span> <span class=nx>i</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=nx>file</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>os</span><span class=p>.</span><span class=nf>Create</span><span class=p>(</span><span class=nx>mrOutName</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>log</span><span class=p>.</span><span class=nf>Fatalf</span><span class=p>(</span><span class=s>&#34;cannot create %v&#34;</span><span class=p>,</span> <span class=nx>mrOutName</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>			<span class=k>return</span> <span class=kc>false</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=nx>files</span><span class=p>[</span><span class=nx>i</span><span class=p>]</span> <span class=p>=</span> <span class=nx>file</span>
+</span></span><span class=line><span class=cl>		<span class=nx>encoders</span><span class=p>[</span><span class=nx>i</span><span class=p>]</span> <span class=p>=</span> <span class=nx>json</span><span class=p>.</span><span class=nf>NewEncoder</span><span class=p>(</span><span class=nx>file</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>	<span class=k>for</span> <span class=nx>_</span><span class=p>,</span> <span class=nx>kv</span> <span class=o>:=</span> <span class=k>range</span> <span class=nx>kva</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>reduceNo</span> <span class=o>:=</span> <span class=nf>ihash</span><span class=p>(</span><span class=nx>kv</span><span class=p>.</span><span class=nx>Key</span><span class=p>)</span> <span class=o>%</span> <span class=nx>nReduce</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>encoders</span><span class=p>[</span><span class=nx>reduceNo</span><span class=p>].</span><span class=nf>Encode</span><span class=p>(</span><span class=o>&amp;</span><span class=nx>kv</span><span class=p>);</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>log</span><span class=p>.</span><span class=nf>Fatalf</span><span class=p>(</span><span class=s>&#34;cannot encode %v&#34;</span><span class=p>,</span> <span class=nx>kv</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>			<span class=k>return</span> <span class=kc>false</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=k>for</span> <span class=nx>_</span><span class=p>,</span> <span class=nx>file</span> <span class=o>:=</span> <span class=k>range</span> <span class=nx>files</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>file</span><span class=p>.</span><span class=nf>Close</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=k>return</span> <span class=kc>true</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=kd>func</span> <span class=nf>merge</span><span class=p>(</span><span class=nx>taskId</span> <span class=kt>int</span><span class=p>,</span> <span class=nx>mMap</span> <span class=kt>int</span><span class=p>)</span> <span class=p>[]</span><span class=nx>KeyValue</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>	<span class=kd>var</span> <span class=nx>intermediate</span> <span class=p>[]</span><span class=nx>KeyValue</span>
+</span></span><span class=line><span class=cl>	<span class=k>for</span> <span class=nx>i</span> <span class=o>:=</span> <span class=mi>0</span><span class=p>;</span> <span class=nx>i</span> <span class=p>&lt;</span> <span class=nx>mMap</span><span class=p>;</span> <span class=nx>i</span><span class=o>++</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>		<span class=nx>mrOutName</span> <span class=o>:=</span> <span class=nx>fmt</span><span class=p>.</span><span class=nf>Sprintf</span><span class=p>(</span><span class=nx>rootPath</span><span class=o>+</span><span class=s>&#34;/intermediate/mr-out-%d-%d&#34;</span><span class=p>,</span> <span class=nx>i</span><span class=p>,</span> <span class=nx>taskId</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=nx>file</span><span class=p>,</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>os</span><span class=p>.</span><span class=nf>Open</span><span class=p>(</span><span class=nx>mrOutName</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=nx>errors</span><span class=p>.</span><span class=nf>Is</span><span class=p>(</span><span class=nx>err</span><span class=p>,</span> <span class=nx>os</span><span class=p>.</span><span class=nx>ErrNotExist</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=k>continue</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=k>if</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=nx>log</span><span class=p>.</span><span class=nf>Fatalf</span><span class=p>(</span><span class=s>&#34;cannot open %v&#34;</span><span class=p>,</span> <span class=nx>mrOutName</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>			<span class=k>return</span> <span class=kc>nil</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=c1>// 读取JSON
+</span></span></span><span class=line><span class=cl><span class=c1></span>		<span class=nx>dec</span> <span class=o>:=</span> <span class=nx>json</span><span class=p>.</span><span class=nf>NewDecoder</span><span class=p>(</span><span class=nx>file</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=k>for</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>			<span class=kd>var</span> <span class=nx>kv</span> <span class=nx>KeyValue</span>
+</span></span><span class=line><span class=cl>			<span class=k>if</span> <span class=nx>err</span> <span class=o>:=</span> <span class=nx>dec</span><span class=p>.</span><span class=nf>Decode</span><span class=p>(</span><span class=o>&amp;</span><span class=nx>kv</span><span class=p>);</span> <span class=nx>err</span> <span class=o>!=</span> <span class=kc>nil</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>				<span class=k>break</span>
+</span></span><span class=line><span class=cl>			<span class=p>}</span>
+</span></span><span class=line><span class=cl>			<span class=nx>intermediate</span> <span class=p>=</span> <span class=nb>append</span><span class=p>(</span><span class=nx>intermediate</span><span class=p>,</span> <span class=nx>kv</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>		<span class=p>}</span>
+</span></span><span class=line><span class=cl>		<span class=nx>file</span><span class=p>.</span><span class=nf>Close</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>	<span class=p>}</span>
+</span></span><span class=line><span class=cl>	<span class=k>return</span> <span class=nx>intermediate</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><h3 id=combine>Combine<a hidden class=anchor aria-hidden=true href=#combine>#</a></h3><p>MapReduce论文中描述：</p><blockquote><p>在某些情况下，每个 map 任务产生的中间键可能会有很多重复，而且用户定义的 Reduce 函数具有可交换和可结合的特性。一个典型的例子是第 2.1 节中的单词计数案例。由于单词出现的频率通常遵循 Zipf 分布，每个 map 任务可能会生成数百或数千条 &lt;the, 1> 这种格式的记录。所有这些计数结果都会被发送到同一个 reduce 任务，并由 Reduce 函数合并成一个总数。为了优化这个过程，我们允许用户指定一个可选的 Combiner 函数，这个函数可以在数据发送到网络之前对数据进行局部合并。</p><p>Combiner 函数在执行 map 任务的每台机器上运行。通常，相同的代码被用于实现 combiner 函数和 reduce 函数。reduce 函数与 combiner 函数之间的唯一区别在于 MapReduce 库处理函数输出的方式不同。reduce 函数的输出会直接写入最终的输出文件，而 combiner 函数的输出则被写入一个中间文件，该文件随后会被发送到 reduce 任务进行处理。</p><p>局部合并大大加快了一些特定类型的 MapReduce 操作。附录 A 中提供了一个使用 combiner 函数的示例。</p></blockquote><p>对于<code>wordCount</code>，根据上一步优化中的<code>json</code>格式表示，其每一行都为：<code>{"Key":"hello","Value":"1"}</code>，其中的<code>hello</code>需要替换为具体出现的单词，若不使用 Combine，则很有可能，经过 Map 阶段之后的某一中间文件（例如<code>mr-out-1-1</code>），其可能包含上百上千行的<code>{"Key":"hello","Value":"1"}</code>，若传输到网络上，则可能文件过大导致一定的网络拥塞。因此，为了减少此类影响，可以将相同<code>Key</code>的所有行替换为一行，例如将123行<code>{"Key":"hello","Value":"1"}</code>经过 Combine 替换成<code>{"Key":"hello","Value":"123"}</code>。以此可以大大减少行数。</p><p>但是经过分析，发现该 Combine 仅适用于特定场景，例如<code>wordCount</code>，而对于题目中给的<code>indexer.go</code>来说，则考虑得更加复杂。其中间输出为：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-json data-lang=json><span class=line><span class=cl><span class=p>{</span><span class=nt>&#34;Key&#34;</span><span class=p>:</span><span class=s2>&#34;success&#34;</span><span class=p>,</span><span class=nt>&#34;Value&#34;</span><span class=p>:</span><span class=s2>&#34;../data/pg-being_ernest.txt&#34;</span><span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>{</span><span class=nt>&#34;Key&#34;</span><span class=p>:</span><span class=s2>&#34;considerably&#34;</span><span class=p>,</span><span class=nt>&#34;Value&#34;</span><span class=p>:</span><span class=s2>&#34;../data/pg-being_ernest.txt&#34;</span><span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>{</span><span class=nt>&#34;Key&#34;</span><span class=p>:</span><span class=s2>&#34;seven&#34;</span><span class=p>,</span><span class=nt>&#34;Value&#34;</span><span class=p>:</span><span class=s2>&#34;../data/pg-being_ernest.txt&#34;</span><span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=p>{</span><span class=nt>&#34;Key&#34;</span><span class=p>:</span><span class=s2>&#34;returns&#34;</span><span class=p>,</span><span class=nt>&#34;Value&#34;</span><span class=p>:</span><span class=s2>&#34;../data/pg-being_ernest.txt&#34;</span><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p><code>Key</code>为单词，<code>Value</code>为其出现的文档名。
+其最终生成的文件每一行类似于：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-sh data-lang=sh><span class=line><span class=cl>A <span class=m>8</span> ../data/pg-being_ernest.txt,../data/pg-dorian_gray.txt,../data/pg-frankenstein.txt,../data/pg-grimm.txt,../data/pg-huckleberry_finn.txt,../data/pg-metamorphosis.txt,../data/pg-sherlock_holmes.txt,../data/pg-tom_sawyer.txt
+</span></span><span class=line><span class=cl>ABOUT <span class=m>1</span> ../data/pg-tom_sawyer.txt
+</span></span></code></pre></td></tr></table></div></div><p>显然，无法通过类似于<code>wordCount</code>的Combine操作来处理<code>indexer</code>。因为实现 Combine 需要考虑到各种不同的任务，因此本实验并没有做 Combine。</p><script src=https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js></script><script>const elementCode=".mermaid",loadMermaid=function(e){mermaid.initialize({theme:e}),mermaid.init({theme:e},document.querySelectorAll(elementCode))},saveOriginalData=function(){return new Promise((e,t)=>{try{var n=document.querySelectorAll(elementCode),s=n.length;n.forEach(t=>{t.setAttribute("data-original-code",t.innerHTML),s--,s==0&&e()})}catch(e){t(e)}})},resetProcessed=function(){return new Promise((e,t)=>{try{var n=document.querySelectorAll(elementCode),s=n.length;n.forEach(t=>{t.getAttribute("data-original-code")!=null&&(t.removeAttribute("data-processed"),t.innerHTML=t.getAttribute("data-original-code")),s--,s==0&&e()})}catch(e){t(e)}})};saveOriginalData().catch(console.error);let isdark=document.body.className.includes("dark");isdark?resetProcessed().then(loadMermaid("dark")).catch(console.error):resetProcessed().then(loadMermaid("neutral")).catch(console.error),document.getElementById("theme-toggle").addEventListener("click",()=>{resetProcessed(),document.body.className.includes("dark")?loadMermaid("neutral"):loadMermaid("dark").catch(console.error)})</script></div><footer class=post-footer><ul class=post-tags><li><a href=https://fireflyyh.top/tags/%E5%88%86%E5%B8%83%E5%BC%8F/>分布式</a></li><li><a href=https://fireflyyh.top/tags/%E5%AE%9E%E9%AA%8C%E6%8A%A5%E5%91%8A/>实验报告</a></li></ul><nav class=paginav><a class=prev href=https://fireflyyh.top/posts/distributionsystem/raft_report/><span class=title>« Prev</span><br><span>Raft实验报告（2A、2B）</span>
+</a><a class=next href=https://fireflyyh.top/posts/distributionsystem/raft/><span class=title>Next »</span><br><span>[论文翻译]In Search of an Understandable Consensus Algorithm (Extended Version)</span></a></nav></footer></article></main><footer class=footer><span>&copy; 2025 <a href=https://fireflyyh.top/>Jagger's Blog</a></span> ·
+<span>Powered by
+<a href=https://gohugo.io/ rel="noopener noreferrer" target=_blank>Hugo</a> &
+        <a href=https://github.com/adityatelange/hugo-PaperMod/ rel=noopener target=_blank>PaperMod</a></span></footer><a href=#top aria-label="go to top" title="Go to Top (Alt + G)" class=top-link id=top-link accesskey=g><svg viewBox="0 0 12 6" fill="currentcolor"><path d="M12 6H0l6-6z"/></svg>
+</a><script>let menu=document.getElementById("menu");menu&&(menu.scrollLeft=localStorage.getItem("menu-scroll-position"),menu.onscroll=function(){localStorage.setItem("menu-scroll-position",menu.scrollLeft)}),document.querySelectorAll('a[href^="#"]').forEach(e=>{e.addEventListener("click",function(e){e.preventDefault();var t=this.getAttribute("href").substr(1);window.matchMedia("(prefers-reduced-motion: reduce)").matches?document.querySelector(`[id='${decodeURIComponent(t)}']`).scrollIntoView():document.querySelector(`[id='${decodeURIComponent(t)}']`).scrollIntoView({behavior:"smooth"}),t==="top"?history.replaceState(null,null," "):history.pushState(null,null,`#${t}`)})})</script><script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script><script>document.getElementById("theme-toggle").addEventListener("click",()=>{document.body.className.includes("dark")?(document.body.classList.remove("dark"),localStorage.setItem("pref-theme","light")):(document.body.classList.add("dark"),localStorage.setItem("pref-theme","dark"))})</script><script>document.querySelectorAll("pre > code").forEach(e=>{const s=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function i(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),i();return}const n=document.createRange();n.selectNodeContents(e);const s=window.getSelection();s.removeAllRanges(),s.addRange(n);try{document.execCommand("copy"),i()}catch{}s.removeRange(n)});let l=e.className.replaceAll("language-",""),n=document.createElement("div"),a=document.createElement("div"),r=document.createElement("div"),c=document.createElement("div"),o=document.createElement("div");o.innerText=l,n.setAttribute("class","mac-tool"),a.setAttribute("class","mac bb1"),r.setAttribute("class","mac bb2"),c.setAttribute("class","mac bb3"),o.setAttribute("class","language-type"),n.appendChild(a),n.appendChild(r),n.appendChild(c),n.appendChild(o),s.classList.contains("highlight")?(s.appendChild(n),s.appendChild(t)):s.parentNode.firstChild==s||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?(s.appendChild(n),e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t)):(s.appendChild(n),e.parentNode.appendChild(t)))})</script></body></html>

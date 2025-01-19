@@ -11,8 +11,40 @@
     </image>
     <generator>Hugo -- 0.129.0</generator>
     <language>en</language>
-    <lastBuildDate>Wed, 06 Nov 2024 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 23 Dec 2024 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://fireflyyh.top/tags/%E5%88%86%E5%B8%83%E5%BC%8F/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Raft实验报告（2A、2B）</title>
+      <link>https://fireflyyh.top/posts/distributionsystem/raft_report/</link>
+      <pubDate>Mon, 23 Dec 2024 00:00:00 +0000</pubDate>
+      <guid>https://fireflyyh.top/posts/distributionsystem/raft_report/</guid>
+      <description>原理 具体可以看翻译的论文。
+状态转换图 Raft的系统主要包含节点角色、领导者选举和日志复制。Raft算法基于复制状态机模型，将集群中的节点分为领导者（Leader）、追随者（Follower）和候选者（Candidate）三种角色。
+领导者：负责处理所有客户端请求，并将操作同步到其他节点，确保系统在出现故障时仍能保持一致性。
+追随者：响应领导者的请求并保存日志条目，通常处于被动状态。追随者向领导者发送心跳以维持领导地位。
+候选者：在选举过程中，节点可以变为候选者，尝试成为领导者。候选者通过请求投票来获得足够的支持。
+三种状态之间的转换如下：
+任务流程 在不发生特殊情况的前提下，该系统进行领导者选举、日志复制的时序图如下：
+sequenceDiagram participant Node1 as Node 1 (Follower) participant Node2 as Node 2 (Follower) participant Node3 as Node 3 (Follower) participant Node4 as Node 4 (Follower) participant Node5 as Node 5 (Follower) %% Node1 超时，转变为 Candidate 并发起选举 Note over Node1: 超时 Node1-&amp;gt;&amp;gt;Node1: 增加当前任期编号&amp;lt;br&amp;gt;转变为 Candidate Node1-&amp;gt;&amp;gt;Node2: RequestVote RPC (Term, CandidateId, LastLogIndex, LastLogTerm) Node1-&amp;gt;&amp;gt;Node3: RequestVote RPC (Term, CandidateId, LastLogIndex, LastLogTerm) Node1-&amp;gt;&amp;gt;Node4: RequestVote RPC (Term, CandidateId, LastLogIndex, LastLogTerm) Node1-&amp;gt;&amp;gt;Node5: RequestVote RPC (Term, CandidateId, LastLogIndex, LastLogTerm) %% 其他节点响应投票请求 Node2--&amp;gt;&amp;gt;Node1: VoteGranted (true) Node3--&amp;gt;&amp;gt;Node1: VoteGranted (true) Node4--&amp;gt;&amp;gt;Node1: VoteGranted (false) : 日志较新 Node5--&amp;gt;&amp;gt;Node1: VoteGranted (true) %% Node1 成为 Leader Note over Node1: 获得多数票 Node1-&amp;gt;&amp;gt;Node1: 转变为 Leader %% 持续发送心跳 loop 每个周期 Node1-&amp;gt;&amp;gt;Node2: Heartbeat(Term, LeaderID, PrevLogIndex, PrevLogTerm, nil, LeaderCommit) Node1-&amp;gt;&amp;gt;Node3: Heartbeat(Term, LeaderID, PrevLogIndex, PrevLogTerm, nil, LeaderCommit) Node1-&amp;gt;&amp;gt;Node4: Heartbeat(Term, LeaderID, PrevLogIndex, PrevLogTerm, nil, LeaderCommit) Node1-&amp;gt;&amp;gt;Node5: Heartbeat(Term, LeaderID, PrevLogIndex, PrevLogTerm, nil, LeaderCommit) Node2--&amp;gt;&amp;gt; Node1: Success(true) Node3--&amp;gt;&amp;gt; Node1: Success(true) Node4--&amp;gt;&amp;gt; Node1: Success(true) Node5--&amp;gt;&amp;gt; Node1: Success(true) end %% 更新日志 Node1-&amp;gt;&amp;gt;Node2: AppendEntries RPC(Term, LeaderID, PrevLogIndex, PrevLogTerm, LogEntries, LeaderCommit) Node1-&amp;gt;&amp;gt;Node3: AppendEntries RPC(Term, LeaderID, PrevLogIndex, PrevLogTerm, LogEntries, LeaderCommit) Node1-&amp;gt;&amp;gt;Node4: AppendEntries RPC(Term, LeaderID, PrevLogIndex, PrevLogTerm, LogEntries, LeaderCommit) Node1-&amp;gt;&amp;gt;Node5: AppendEntries RPC(Term, LeaderID, PrevLogIndex, PrevLogTerm, LogEntries, LeaderCommit) Node2--&amp;gt;&amp;gt; Node1: Success(true) Node3--&amp;gt;&amp;gt; Node1: Success(false)：日志不匹配 Node4--&amp;gt;&amp;gt; Node1: Success(true) Node5--&amp;gt;&amp;gt; Node1: Success(true) Note over Node1: 多数派复制成功 Node1-&amp;gt;&amp;gt;Node1: 提交日志 其主要可以分为两个部分：领导者选举和日志复制：</description>
+    </item>
+    <item>
+      <title>MapReduce实验报告</title>
+      <link>https://fireflyyh.top/posts/distributionsystem/marpreduce_report/</link>
+      <pubDate>Sun, 22 Dec 2024 00:00:00 +0000</pubDate>
+      <guid>https://fireflyyh.top/posts/distributionsystem/marpreduce_report/</guid>
+      <description>原理 具体可以看翻译的论文
+系统架构 MapReduce的整体系统架构图如上图所示。总体上可以分为三个部分：Client、Master、Worker
+在Client中，编写的MapReduce程序提交到master端，用户可通过Client提供的一些接口查看作业运行状态。
+在Master中，又分为两个部分：
+Task Scheduler负责调度mapreduce作业，它将作业分解为多个Map任务和Reduce任务，然后将这些任务分配给集群中的不同节点来处理。 JobTracker负责它监控任务的执行状态，负责处理来自worker的数据，并负责将数据转发与存储。同时也负责任务的失败处理。 在Worker中，分为了三个部分：
+TaskTracker任务： 分布在集群各个节点上的工作节点，负责执行由JobTracker分配的Map和Reduce任务。每个TaskTracker节点都可以并行执行多个任务。TaskTracker会将任务的执行进度和状态报告给mastre中的JobTracker。
+Map任务： Map任务是MapReduce处理的第一阶段。输入数据被分为多个分片，每个分片被分配给一个Map任务。Map任务处理数据片段，将其转化为键值对&amp;lt;key, value&amp;gt;的形式。然后，它们将这些键值存储到一定位置并告知master，以供后续的Reduce任务使用。
+Reduce任务： Reduce任务是MapReduce处理的第二阶段。Reduce任务负责处理由Map任务产生的中间键值对。它将相同键的数据进行汇总和归并处理，然后输出最终的计算结果。通常，Reduce任务会聚合、筛选或合并相同键的数据，实现对Map结果的进一步处理。
+任务流程 流程图如上图所示，关键流程有以下几步：
+用户程序中的MapReduce库首先将输入文件划分为M个分片，通常每个分片为16MB到64MB（用户可通过可选参数控制）。随后，库会在集群中的机器上启动程序的一些副本。 这些程序的副本中，有一份很特殊，它是master副本。其他的副本是被master分配了任务的worker副本。总计要分配 M个map任务和R个reduce任务。master选取闲置的worker并为每个选取的worker分配map或reduce任务。 被分配map任务的worker从输入数据分片中读取内容。其解析输入数据中的键值对，并将每个键值对传给用户定义的map函数。map函数输出的中间键值对在内存中缓存。 内存中缓存的键值对会定期地写入本地磁盘，写入的数据会被分区函数划分为R个区域。这些在磁盘中缓存的键值对的位置会被发送给master，master会将这些位置信息进一步传递给reduce worker。 当master通知reduce worker中间键值对的位置信息后，reduce worker会通过RPC的方式从map worker的本地磁盘中读取缓存的数据。当reduce worker读取完所有中间数据后，它会对中间数据按照键进行排序，以便将所有键相同的键值对分为一组。因为通常来说，需对键不同的数据会被映射到同一个reduce任务中，所以需要对数据排序。如果中间数据总量过大以至于无法放入内存中，则会使用外排序算法。 reduce worker遍历每一个遇到的中间键值对的，它会将键和该键对应的一系列值传递给用户定义的reduce函数。reduce函数的输出会被追加到该reduce分区的最终输出文件中。 当所有的map和reduce任务都执行完毕后，master会唤醒用户程序。此时，调用MapReduce的调应用序会返回到用户代码中。 总览 本次实验最终实现的思路，其时序图如下：
+实验的类图如下：
+classDiagram class Coordinator { +state: TaskType +tasks: map[TaskType][]Task +mapping: map[int]int +reducing: map[int]int +GetTask(args: GetTaskArgs, reply: *GetTaskReply) error +WorkerComplete(args: *GetTaskArgs, reply: *GetTaskReply) error } class Worker { +doMap(mapf: func(string, string) []KeyValue, reply: *GetTaskReply) bool +doReduce(reducef: func(string, []string) string, reply: *GetTaskReply) bool +merge(taskId: int, mMap: int) []KeyValue +devide(kva: []KeyValue, taskId: int, nReduce: int) bool } class Task { +TaskId: int +TaskType: TaskType +TaskState: TaskState +startTime: time.</description>
+    </item>
     <item>
       <title>[论文翻译]In Search of an Understandable Consensus Algorithm  (Extended Version)</title>
       <link>https://fireflyyh.top/posts/distributionsystem/raft/</link>
