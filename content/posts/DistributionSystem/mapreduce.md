@@ -6,6 +6,18 @@ tags: ["分布式", "论文"]
 categories: ["Learning"]
 ---
 
+---
+
+<div style="text-align: center;">
+  <p>
+    Jeffrey Dean and Sanjay Ghemawat<br>
+    jeff@google.com, sanjay@google.com<br>
+    <i>Google, Inc.</i>
+  </p>
+</div>
+
+---
+
 ## 摘要
 
 MapReduce 是一种用于处理和生成大型数据集的编程模型和相关实现。用户指定一个 **map** 函数来处理键/值对，生成一组中间键/值对，并指定一个 **reduce** 函数来合并与同一中间键相关的所有中间值。如本文所示，许多现实世界中的任务都可以用这个模型来表达。

@@ -6,6 +6,15 @@ tags: ["分布式", "论文"]
 categories: ["Learning"]
 ---
 
+---
+
+<div style="text-align:center">
+    Sanjay Ghemawat, Howard Gobioff, and Shun-Tak Leung<br>
+    Google∗
+</div>
+
+---
+
 ## 摘要
 
 我们设计并实现了谷歌文件系统，这是一个可扩展的分布式文件系统，适用于大型分布式数据密集型应用。该系统可在廉价的商品硬件上运行，同时提供容错功能，并能为大量客户端提供高聚合性能。

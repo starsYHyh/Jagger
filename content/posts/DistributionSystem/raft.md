@@ -6,12 +6,14 @@ tags: ["分布式", "论文"]
 categories: ["Learning"]
 ---
 
+---
+
 <div style="text-align:center">
     Diego Ongaro and John Ousterhout <br>
     Stanford University
 </div>
 
-----
+---
 
 ## 摘要
 

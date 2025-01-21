@@ -6,6 +6,7 @@ tags: ["分布式", "论文"]
 categories: ["Learning"]
 ---
 
+----
 <div style="display: flex; justify-content: space-between;">
   <span style="text-align: center; display: inline-block; width: 45%;">
     Patrick Hunt and Mahadev Konar<br>
@@ -18,6 +19,8 @@ categories: ["Learning"]
     {fpj,breed}@yahoo-inc.com
   </span>
 </div>
+
+----
 
 ## 摘要
 
